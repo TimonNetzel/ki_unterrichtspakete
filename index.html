@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Das Wochenpaket</title>
+<meta name="description" content="Wie Claude Code aus einem Halbjahresskript jede Woche Lernmaterial baut. Einfach erklärt und als Bauanleitung für Kollegen und andere Fächer.">
+<style>
+:root{
+  --bg:#f6f5f1; --card:#ffffff; --ink:#1c2230; --muted:#5b6474; --line:#e3e0d8; --soft:#efede7;
+  --accent:#c2410c; --accent-soft:#fbe8dc;
+  --in:#1d5fbf; --in-soft:#e3edfb;
+  --ve:#6b3fc4; --ve-soft:#eee7fb;
+  --out:#17804a; --out-soft:#e1f3e8;
+  --warn:#9a6700; --warn-soft:#fdf3d7;
+  --code:#f1efe9; --shadow:0 1px 2px rgba(20,20,30,.06),0 4px 16px rgba(20,20,30,.06);
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161b; --card:#1d2027; --ink:#e9e7e1; --muted:#a3a8b3; --line:#2f333c; --soft:#252931;
+    --accent:#f08a4b; --accent-soft:#3a2418;
+    --in:#7fb0f5; --in-soft:#1b2a40; --ve:#b49af5; --ve-soft:#2a2240; --out:#6fd09b; --out-soft:#173226;
+    --warn:#f0c35a; --warn-soft:#3a3018; --code:#262a32; --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161b; --card:#1d2027; --ink:#e9e7e1; --muted:#a3a8b3; --line:#2f333c; --soft:#252931;
+  --accent:#f08a4b; --accent-soft:#3a2418;
+  --in:#7fb0f5; --in-soft:#1b2a40; --ve:#b49af5; --ve-soft:#2a2240; --out:#6fd09b; --out-soft:#173226;
+  --warn:#f0c35a; --warn-soft:#3a3018; --code:#262a32; --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:110px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+img{max-width:100%;display:block}
+a{color:var(--accent)}
+code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em}
+code{background:var(--code);padding:.1em .35em;border-radius:5px;overflow-wrap:anywhere}
+pre{background:var(--code);padding:14px 16px;border-radius:10px;overflow:auto;line-height:1.5;margin:0}
+h1,h2,h3,h4{line-height:1.25;margin:0 0 .5em}
+h2{font-size:clamp(1.5rem,4vw,2rem);letter-spacing:-.01em}
+h3{font-size:1.15rem}
+p{margin:0 0 .9em}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+
+/* Kopf */
+.hero{padding:40px 0 28px;background:linear-gradient(160deg,var(--accent-soft),transparent 60%)}
+.kicker{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.hero h1{font-size:clamp(2rem,6vw,3.2rem);letter-spacing:-.02em;margin:.2em 0 .3em}
+.hero .lead{font-size:1.15rem;max-width:62ch;color:var(--muted)}
+.byline{font-size:.9rem;color:var(--muted);margin-top:14px}
+
+/* Leiste */
+.bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;gap:12px;align-items:center;padding-top:8px;padding-bottom:8px;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:3px;border:1px solid var(--line)}
+.seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:600;font-size:.9rem;padding:6px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1 1 300px;min-width:0}
+.nav::-webkit-scrollbar{display:none}
+.nav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:.88rem;padding:6px 10px;border-radius:8px}
+.nav a:hover,.nav a.on{background:var(--soft);color:var(--ink)}
+.themebtn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;width:36px;height:36px;cursor:pointer;font-size:1rem}
+
+/* Modus */
+body.einfach .nur-genau{display:none!important}
+body:not(.einfach) .nur-einfach{display:none!important}
+.modehint{font-size:.85rem;color:var(--muted)}
+
+section{padding:56px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
+.grid{display:grid;gap:16px}
+.grid>*{min-width:0}
+@media(min-width:760px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}}
+.tag{display:inline-block;font-size:.75rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.02em}
+.t-in{background:var(--in-soft);color:var(--in)} .t-ve{background:var(--ve-soft);color:var(--ve)} .t-out{background:var(--out-soft);color:var(--out)} .t-acc{background:var(--accent-soft);color:var(--accent)} .t-warn{background:var(--warn-soft);color:var(--warn)}
+
+/* In einer Minute */
+.ipo{display:grid;gap:12px;margin:22px 0}
+@media(min-width:760px){.ipo{grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch}}
+.ipo .card{border-top:4px solid}
+.ipo .c-in{border-top-color:var(--in)} .ipo .c-ve{border-top-color:var(--ve)} .ipo .c-out{border-top-color:var(--out)}
+.ipo ul{margin:.3em 0 0;padding-left:1.1em}
+.arrow{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.6rem}
+@media(max-width:759px){.arrow{transform:rotate(90deg);height:24px}}
+
+.strip{display:flex;gap:14px;overflow-x:auto;padding:6px 2px 14px;scroll-snap-type:x mandatory}
+.shot{flex:0 0 auto;width:200px;scroll-snap-align:start;margin:0}
+.shot.doc{width:240px}
+.shot.wide{width:360px}
+.shot button{all:unset;cursor:zoom-in;display:block;width:100%;box-sizing:border-box;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow)}
+.shot button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.shot img{width:100%;height:340px;object-fit:cover;object-position:top}
+.shot.doc img{height:320px}
+.shot.wide img{height:220px}
+.shot figcaption{font-size:.85rem;margin-top:8px;line-height:1.35}
+.shot figcaption b{display:block}
+
+/* Ablauf */
+.flow{display:grid;gap:14px;margin-top:18px}
+@media(min-width:980px){.flow{grid-template-columns:1fr 1.6fr 1fr}}
+.lane{min-width:0;border-radius:var(--r);padding:14px;border:1px dashed var(--line)}
+.lane h3{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;margin:0 0 10px}
+.lane.in{background:color-mix(in srgb,var(--in-soft) 55%,transparent)} .lane.in h3{color:var(--in)}
+.lane.ve{background:color-mix(in srgb,var(--ve-soft) 55%,transparent)} .lane.ve h3{color:var(--ve)}
+.lane.out{background:color-mix(in srgb,var(--out-soft) 55%,transparent)} .lane.out h3{color:var(--out)}
+.nodes{display:grid;gap:8px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative}
+.pair-label{grid-column:1/-1;font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:-2px}
+.node{all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:transform .12s,box-shadow .12s;min-height:52px}
+.node:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.node:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.node .ic{font-size:1.3rem;width:28px;text-align:center;flex:0 0 auto}
+.node .tx{min-width:0}
+.node .tx b{display:block;font-size:.93rem;line-height:1.25}
+.node .tx span{font-size:.78rem;color:var(--muted)}
+.node.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.node .num{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:700}
+.down{text-align:center;color:var(--muted);font-size:.9rem;line-height:1}
+.panel{margin-top:16px;display:grid;gap:18px}
+@media(min-width:860px){.panel{grid-template-columns:1.35fr 1fr}}
+.panel>*{min-width:0}
+.panel h3{font-size:1.35rem}
+.who{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px}
+.panel .pimg button{all:unset;cursor:zoom-in;display:block;width:100%;box-sizing:border-box;border-radius:12px;overflow:hidden;border:1px solid var(--line);max-height:520px}
+.panel .pimg img{width:100%;object-fit:cover;object-position:top;max-height:520px}
+.pnav{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:600;font-size:.9rem;padding:8px 14px;border-radius:10px;cursor:pointer}
+.btn:hover{background:var(--soft)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.files{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.files li{font-size:.9rem}
+.why{border-left:4px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 10px 10px 0;margin:12px 0;font-size:.95rem}
+
+/* Tabellen */
+.tbl{width:100%;border-collapse:collapse;font-size:.93rem}
+.tbl th,.tbl td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.scroll{overflow-x:auto}
+
+/* Akkordeon */
+details.acc{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+details.acc>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;gap:12px;align-items:baseline;font-weight:650}
+details.acc>summary::-webkit-details-marker{display:none}
+details.acc>summary .n{color:var(--accent);font-variant-numeric:tabular-nums;min-width:1.6em}
+details.acc>summary::after{content:"+";margin-left:auto;color:var(--muted);font-size:1.2rem;line-height:1}
+details.acc[open]>summary::after{content:"−"}
+details.acc .in{padding:0 16px 16px 16px}
+blockquote{margin:10px 0;padding:10px 14px;background:var(--code);border-radius:10px;font-size:.9rem}
+blockquote .src{display:block;font-size:.75rem;color:var(--muted);margin-top:6px}
+
+/* Vorlagen */
+.vl{display:grid;gap:12px}
+@media(min-width:860px){.vl{grid-template-columns:260px 1fr}}
+.vl-list{display:flex;flex-direction:column;gap:4px}
+@media(max-width:859px){.vl-list{flex-direction:row;overflow-x:auto}}
+.vl-list button{all:unset;cursor:pointer;padding:8px 10px;border-radius:8px;font-size:.86rem;white-space:nowrap}
+.vl-list button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.vl-list button:focus-visible{outline:2px solid var(--accent)}
+.vl-view{min-width:0}
+.vl-head{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap}
+.vl-view pre{max-height:460px;font-size:.82rem;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.tabs button{border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-weight:650;font-size:.92rem;padding:8px 14px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* Checkliste */
+.prog{height:10px;background:var(--soft);border-radius:999px;overflow:hidden;margin:6px 0 14px}
+.prog i{display:block;height:100%;width:0;background:var(--out);transition:width .3s}
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px}
+.check input{width:22px;height:22px;flex:0 0 auto;margin-top:2px;accent-color:var(--out)}
+.check label{cursor:pointer}
+.check b{display:block}
+.check .d{font-size:.9rem;color:var(--muted);display:block}
+.check li.done{opacity:.65}
+
+/* Fächer */
+.chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.c-ok{background:var(--out-soft);color:var(--out)} .c-an{background:var(--warn-soft);color:var(--warn)} .c-er{background:var(--accent-soft);color:var(--accent)}
+.mini{display:grid;gap:10px}
+@media(min-width:760px){.mini{grid-template-columns:repeat(4,1fr)}}
+.mini .card{padding:14px}
+.mini h4{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.mini ul{margin:0;padding-left:1.1em;font-size:.9rem}
+
+/* Pakete */
+.zoom{all:unset;cursor:zoom-in;display:block;width:100%}
+.zoom:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.pk img{border-radius:10px;border:1px solid var(--line);height:240px;width:100%;object-fit:cover;object-position:top;margin:6px 0 12px}
+.pk dl{margin:0;font-size:.92rem}
+.pk dt{font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:10px}
+.pk dd{margin:2px 0 0}
+
+/* Zahlen */
+.stat{padding:18px}
+.stat .v{font-size:2rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.stat .l{font-size:.9rem;color:var(--muted)}
+
+/* Zeitleiste */
+.tl{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line)}
+.tl li{position:relative;padding:0 0 18px 14px}
+.tl li::before{content:"";position:absolute;left:-25px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
+.tl time{font-size:.8rem;font-weight:700;color:var(--accent)}
+
+/* Glossar */
+.gterm{all:unset;cursor:help;border-bottom:1.5px dotted var(--accent);color:inherit}
+.gterm:focus-visible{outline:2px solid var(--accent)}
+#pop{position:absolute;z-index:40;max-width:300px;background:var(--ink);color:var(--bg);padding:10px 12px;border-radius:10px;font-size:.88rem;line-height:1.45;box-shadow:var(--shadow);display:none}
+#pop b{display:block;margin-bottom:2px}
+.gl{display:grid;gap:8px}
+@media(min-width:760px){.gl{grid-template-columns:1fr 1fr}}
+.gl div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.gl dt{font-weight:700}
+.gl dd{margin:2px 0 0;font-size:.92rem;color:var(--muted)}
+.search{width:100%;max-width:360px;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);margin-bottom:12px}
+
+/* Lightbox */
+dialog#lb{border:0;padding:0;background:transparent;max-width:min(96vw,900px);max-height:94vh}
+dialog#lb::backdrop{background:rgba(10,10,15,.82)}
+dialog#lb img{max-height:86vh;width:auto;margin:0 auto;border-radius:10px}
+dialog#lb p{color:#fff;text-align:center;margin:8px 0 0;font-size:.9rem}
+dialog#lb button{position:fixed;top:12px;right:12px;border:0;background:#fff;color:#111;border-radius:999px;width:40px;height:40px;font-size:1.2rem;cursor:pointer}
+
+footer{margin-top:60px;padding:28px 0 40px;border-top:1px solid var(--line);font-size:.9rem;color:var(--muted)}
+@media print{.bar,.pnav,.themebtn{display:none}.nur-genau,.nur-einfach{display:block!important}section{break-inside:avoid-page}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">KI im Unterricht · Bauanleitung</div>
+    <h1>Das Wochenpaket</h1>
+    <p class="lead">Ein Satz im Chat, und rund 40 Minuten später liegt das Lernmaterial der Woche online: ein Lernabenteuer fürs Handy, ein Lernblatt mit Lösung, ein Aufgabenblatt und eine Unterrichtsplanung. Diese Seite zeigt, wie das funktioniert und wie ihr es für euer Fach nachbauen könnt.</p>
+    <p class="byline">Timon Netzel, Lore-Lorentz-Schule (Berufskolleg) · Stand: Oktober 2026 · Beispiele aus der Klasse 11BC, Mathematik</p>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="seg" role="group" aria-label="Erklärtiefe">
+      <button type="button" data-mode="einfach" aria-pressed="false">Einfach</button>
+      <button type="button" data-mode="genau" aria-pressed="true">Ausführlich</button>
+    </div>
+    <nav class="nav" aria-label="Abschnitte">
+      <a href="#minute">Überblick</a>
+      <a href="#ablauf">Ablauf</a>
+      <a href="#bausteine">Bausteine</a>
+      <a href="#prompts">Prompts</a>
+      <a href="#nachbauen">Nachbauen</a>
+      <a href="#faecher">Andere Fächer</a>
+      <a href="#pakete">Weitere Pakete</a>
+      <a href="#recht">Datenschutz</a>
+      <a href="#kosten">Aufwand</a>
+      <a href="#gelernt">Erfahrungen</a>
+      <a href="#glossar">Glossar</a>
+    </nav>
+    <button class="themebtn" type="button" id="themebtn" aria-label="Hell oder dunkel umschalten"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
+  </div>
+</div>
+
+<main>
+
+<!-- 1 Überblick -->
+<section id="minute">
+  <div class="wrap">
+    <span class="tag t-acc">1 Überblick</span>
+    <h2>Das Wochenpaket in einer Minute</h2>
+    <p class="nur-einfach">Stellt euch eine sehr fleißige Assistenz vor, die euer Halbjahresskript kennt. Ihr sagt: „Mach mir Woche 5 für die 11BC, 90 Minuten Lernen, 20 Minuten Üben.“ Die Assistenz liest nur den Teil des Skripts, der zu Woche 5 gehört, baut daraus das Material, prüft es mehrfach und fragt am Ende, ob sie es hochladen darf.</p>
+    <p class="nur-genau">Ein Aufruf in Claude Code startet eine feste Kette: Ein Python-Skript schneidet die Woche aus dem Halbjahresskript, zwei <button class="gterm" data-g="subagent">Subagenten</button> mit Claude Opus erstellen parallel Lernen und Üben, Bauskripte testen alles automatisch im Browser, ein dritter Agent mit Claude Sonnet lektoriert. Erst nach dem Ok der Lehrkraft geht alles per Git auf <button class="gterm" data-g="pages">GitHub Pages</button>.</p>
+
+    <div class="ipo">
+      <div class="card c-in">
+        <span class="tag t-in">Input</span>
+        <h3 style="margin-top:8px">Was die Lehrkraft gibt</h3>
+        <ul>
+          <li>Halbjahresskript (einmal pro Halbjahr)</li>
+          <li>Kursdaten der Klasse</li>
+          <li>Ein Satz: <code>/wochenpaket 11BC 5 90 20</code></li>
+        </ul>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="card c-ve">
+        <span class="tag t-ve">Verarbeitung</span>
+        <h3 style="margin-top:8px">Was Claude tut</h3>
+        <ul>
+          <li>Woche aus dem Skript schneiden</li>
+          <li>Lernen und Üben parallel erstellen</li>
+          <li>Alles nachrechnen, testen, lektorieren</li>
+        </ul>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="card c-out">
+        <span class="tag t-out">Output</span>
+        <h3 style="margin-top:8px">Was herauskommt</h3>
+        <ul>
+          <li>Lernabenteuer (Handy, Tablet, Beamer)</li>
+          <li>Lernblatt, Lösungen, Aufgabenblatt</li>
+          <li>Unterrichtsplanung und Übersichtsseite</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>So sieht das Ergebnis aus <span class="muted small">(Woche 5, 11BC, antippen zum Vergrößern)</span></h3>
+    <div class="strip" id="galerie"></div>
+    <p class="small muted">Live ansehen: <a href="https://timonnetzel.github.io/11BC_Mathematik/">Übersichtsseite der 11BC</a> und <a href="https://github.com/TimonNetzel/11BC_Mathematik">Klassen-Repo auf GitHub</a></p>
+  </div>
+</section>
+
+<!-- 2 Ablauf -->
+<section id="ablauf">
+  <div class="wrap">
+    <span class="tag t-acc">2 Ablauf</span>
+    <h2>Vom Skript zum fertigen Material</h2>
+    <p>Tippt auf eine Station, um zu sehen, was dort passiert. Mit „Weiter“ geht ihr den Weg Schritt für Schritt ab. <span class="nur-einfach">Im Modus „Ausführlich“ seht ihr zusätzlich Dateien, Befehle und Begründungen.</span></p>
+
+    <div class="flow">
+      <div class="lane in">
+        <h3>Input</h3>
+        <div class="nodes" data-lane="in"></div>
+      </div>
+      <div class="lane ve">
+        <h3>Verarbeitung</h3>
+        <div class="nodes" data-lane="ve"></div>
+      </div>
+      <div class="lane out">
+        <h3>Output</h3>
+        <div class="nodes" data-lane="out"></div>
+      </div>
+    </div>
+
+    <div class="panel card" id="panel" aria-live="polite">
+      <div>
+        <div class="muted small" id="p-step"></div>
+        <h3 id="p-title"></h3>
+        <div class="who" id="p-who"></div>
+        <div id="p-einfach"></div>
+        <div id="p-genau" class="nur-genau"></div>
+        <div class="pnav">
+          <button class="btn" type="button" id="p-prev">← Zurück</button>
+          <button class="btn pri" type="button" id="p-next">Weiter →</button>
+        </div>
+      </div>
+      <div class="pimg" id="p-img"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 Bausteine -->
+<section id="bausteine">
+  <div class="wrap">
+    <span class="tag t-acc">3 Bausteine</span>
+    <h2>Woraus das System besteht</h2>
+    <p class="nur-einfach">Das System hat drei Arten von Helfern. KI-Modelle schreiben und denken mit. Kleine Programme rechnen, testen und bauen, weil sie dabei nie müde werden und nie raten. GitHub speichert alles und stellt es als Webseite für die Klasse ins Netz.</p>
+
+    <div class="grid g3" style="margin:18px 0">
+      <div class="card">
+        <span class="tag t-ve">KI</span>
+        <h3 style="margin-top:8px">Claude Code</h3>
+        <p class="small">Ein KI-Assistent, der in einer Cloud-Sitzung Dateien liest und schreibt, Befehle ausführt und Programme baut. Läuft im Browser und in der Claude-App, also auch vom Handy aus.</p>
+      </div>
+      <div class="card">
+        <span class="tag t-in">Regeln</span>
+        <h3 style="margin-top:8px">Skills und CLAUDE.md</h3>
+        <p class="small">Textdateien mit Anweisungen. <code>CLAUDE.md</code> gilt immer (Hausregeln). Ein <button class="gterm" data-g="skill">Skill</button> beschreibt einen Ablauf, z. B. das Wochenpaket, und startet mit <code>/wochenpaket</code>.</p>
+      </div>
+      <div class="card">
+        <span class="tag t-out">Ablage</span>
+        <h3 style="margin-top:8px">GitHub</h3>
+        <p class="small">Ein privates <button class="gterm" data-g="repo">Repo</button> für Skills, Werkzeuge und Skripte. Je Klasse ein öffentliches Repo, das GitHub Pages als Webseite ausliefert. Die Schüler brauchen nur den Link.</p>
+      </div>
+    </div>
+
+    <h3>Welches Modell macht was?</h3>
+    <div class="card scroll" style="padding:6px 8px">
+      <table class="tbl">
+        <thead><tr><th>Rolle</th><th>Modell</th><th class="nur-genau">Aufwand</th><th>Aufgabe</th><th class="nur-genau">Warum so</th></tr></thead>
+        <tbody>
+          <tr><td><b>Hauptsitzung</b><br><span class="small muted">der Dirigent</span></td><td>Modell der Sitzung<br><span class="small muted">bei uns Claude Opus</span></td><td class="nur-genau">Standard</td><td>Startet die Agenten, verbindet Lernen und Üben, prüft, fragt nach dem Ok, lädt hoch</td><td class="nur-genau">Behält den Überblick und schreibt selbst wenig. So bleibt ihr Kontext klein.</td></tr>
+          <tr><td><b>Autor Lernen</b><br><span class="small muted">Subagent <code>unterricht-opus</code></span></td><td>Claude Opus 5.5</td><td class="nur-genau">hoch</td><td>Lerneinheit planen, Lernabenteuer, Lernblatt und Unterrichtsplanung schreiben, testen, kürzen</td><td class="nur-genau">Die schwierigste Aufgabe: Didaktik, Mathematik und Programmcode zugleich.</td></tr>
+          <tr><td><b>Autor Üben</b><br><span class="small muted">Subagent <code>unterricht-opus</code></span></td><td>Claude Opus 5.5</td><td class="nur-genau">hoch</td><td>Aufgabenblatt mit Erwartungshorizont, alles mit Python nachrechnen</td><td class="nur-genau">Lief anfangs mit Sonnet und wurde nach wenigen Tagen auf Opus umgestellt.</td></tr>
+          <tr><td><b>Lektor</b><br><span class="small muted">Subagent <code>unterricht-sonnet</code></span></td><td>Claude Sonnet 5.5</td><td class="nur-genau">hoch</td><td>Rechtschreibung, Grammatik, Wortwahl in allen Texten</td><td class="nur-genau">Ein frischer Agent liest ohne die Vorgeschichte der Autoren. Sprache prüfen ist leichter als Material erstellen, daher das schnellere Modell.</td></tr>
+          <tr><td><b>Werkzeuge</b><br><span class="small muted">keine KI</span></td><td>Python, Node, Playwright, LanguageTool, KaTeX, Chromium</td><td class="nur-genau">keiner</td><td>Schneiden, bauen, im Browser durchspielen, PDF drucken, Stil und Sprache prüfen</td><td class="nur-genau">Was sich mechanisch prüfen lässt, prüft ein Skript. Das ist verlässlicher und kostet keine Token.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted nur-genau" style="margin-top:10px">Modellnamen ändern sich. In den Vorlagen steht deshalb nur <code>model: opus</code> bzw. <code>model: sonnet</code>, dann nimmt Claude Code automatisch die aktuelle Fassung. „Aufwand“ (<code>effort</code>) legt fest, wie gründlich das Modell nachdenkt.</p>
+  </div>
+</section>
+
+<!-- 4 Prompts -->
+<section id="prompts">
+  <div class="wrap">
+    <span class="tag t-acc">4 Prompts verstehen</span>
+    <h2>Zwölf Regeln, die den Unterschied machen</h2>
+    <p>Die Anweisungen an die KI sind über Wochen gewachsen. Wichtiger als jeder einzelne Satz sind die Prinzipien dahinter. <span class="nur-genau">Zu jeder Regel steht ein Auszug aus den echten Anweisungen.</span></p>
+    <div id="regeln"></div>
+
+    <div class="nur-genau" style="margin-top:34px">
+      <h3>Vorlagen zum Kopieren</h3>
+      <p>Gekürzte, fachneutrale Fassungen der echten Dateien. Sie liegen auch im Ordner <a href="https://github.com/TimonNetzel/ki_unterrichtspakete/tree/main/vorlagen"><code>vorlagen/</code></a> dieses Repos und lassen sich direkt übernehmen.</p>
+      <div class="card vl">
+        <div class="vl-list" role="tablist" id="vl-list"></div>
+        <div class="vl-view">
+          <div class="vl-head"><code id="vl-name"></code><span><button class="btn" type="button" id="vl-copy">Kopieren</button> <a class="btn" id="vl-gh" href="#" style="text-decoration:none">Auf GitHub</a></span></div>
+          <div class="small muted" id="vl-desc" style="margin-bottom:8px"></div>
+          <pre id="vl-pre"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 Nachbauen -->
+<section id="nachbauen">
+  <div class="wrap">
+    <span class="tag t-acc">5 Nachbauen</span>
+    <h2>Selbst einrichten</h2>
+    <p>Zwei Wege zum gleichen Ziel. Wer noch nie mit GitHub gearbeitet hat, nimmt den Einsteigerweg. Claude erledigt dabei den technischen Teil selbst. Der Technikweg erklärt die Architektur für alle, die verstehen oder umbauen wollen.</p>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="true" data-tab="ein">Einsteiger</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="tech">Technikaffin</button>
+    </div>
+
+    <div data-panel="ein">
+      <div class="small muted" id="prog-txt">0 von 12 erledigt</div>
+      <div class="prog"><i id="prog"></i></div>
+      <ul class="check" id="check"></ul>
+      <p class="small muted" style="margin-top:10px">Die Häkchen speichert nur euer Browser auf diesem Gerät.</p>
+    </div>
+
+    <div data-panel="tech" hidden>
+      <div class="grid g2">
+        <div class="card">
+          <h3>Ordnerstruktur</h3>
+<pre>privates-repo/
+├─ CLAUDE.md              Hausregeln
+├─ .claude/
+│  ├─ skills/
+│  │  ├─ wochenpaket/SKILL.md
+│  │  ├─ lerneinheit-vorbereiten/SKILL.md
+│  │  ├─ lernseite/SKILL.md      (+ assets, scripts)
+│  │  └─ aufgabenblatt/SKILL.md
+│  └─ agents/
+│     ├─ autor.md         model: opus
+│     └─ lektor.md        model: sonnet
+├─ _werkzeuge/
+│  ├─ schnitt.py
+│  ├─ lernen_bauen.sh   ueben_bauen.sh
+│  ├─ index_bauen.py    stilcheck.py
+│  └─ arbeit/           Zwischendateien (.gitignore)
+└─ 11A/
+   ├─ kurs.json          privat
+   ├─ quellen/*.md       Halbjahresskript
+   └─ github/            Klon des Klassen-Repos (.gitignore)</pre>
+        </div>
+        <div class="card">
+          <h3>Das Muster hinter jedem Paket</h3>
+          <ol class="small" style="padding-left:1.2em;margin:0">
+            <li><b>Eingabe verkleinern:</b> Skript schneiden, Agenten nur Pfade geben.</li>
+            <li><b>KI schreibt nur Inhalt:</b> <code>content.js</code> bzw. <code>content.html</code>. Design und Logik stecken in einer festen Vorlage.</li>
+            <li><b>Bauskript als einzige Tür:</b> bauen → testen → nur bei Erfolg ins Klassen-Repo kopieren. Bei einem Fehler bleiben die alten Dateien stehen.</li>
+            <li><b>Prüfen in Schichten:</b> Python rechnet nach, Playwright spielt durch, Stilcheck und LanguageTool lesen, ein zweites Modell lektoriert.</li>
+            <li><b>Der Mensch gibt frei:</b> Änderungsliste zeigen, auf Ok warten, dann pushen.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Bauskript (Kern)</h3>
+<pre>#!/usr/bin/env bash
+set -euo pipefail
+K=$1; NN=$(printf '%02d' "$2")
+A=_werkzeuge/arbeit/$K-w$NN/lernen
+G=$K/github/woche-$NN
+python3 build_sim.py $A/content.js $A/sim.html \
+  --kurs $K/kurs.json
+node test_sim.js $A/sim.html $A/shots   # bricht bei Fehlern ab
+node build_pdfs.js $A                    # Lernblatt, Lösung, Planung
+mkdir -p $G
+cp $A/sim.html $G/lernen.html
+cp $A/lernblatt.pdf $G/lernen.pdf
+cp $A/loesungen.pdf $G/lernen_loesungen.pdf</pre>
+        </div>
+        <div class="card">
+          <h3>Was der Browsertest prüft</h3>
+          <ul class="small" style="padding-left:1.2em;margin:0">
+            <li>Spielt jede Etappe auf drei Bildschirmen durch: Handy hochkant (390 px), Tablet (820 px), Handy quer.</li>
+            <li>Löst jede Aufgabe richtig und prüft Fehlerpfade, Hilfen und Navigation.</li>
+            <li>Meldet JavaScript-Fehler, überlaufende Inhalte und Auswahlaufgaben, bei denen die richtige Antwort die längste ist.</li>
+            <li>Schätzt die Unterrichtszeit (z. B. 1,5 min je Aufgabe, 2 min je Gegner-Aufgabe) und meldet „Zu lang“.</li>
+            <li>Legt Screenshots ab, die der Agent selbst ansieht.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Token sparen</h3>
+          <ul class="small" style="padding-left:1.2em;margin:0">
+            <li>Nie das ganze Skript lesen lassen. Der Schnitt der Woche reicht.</li>
+            <li>Subagenten bekommen nur Pfade, nicht den Chatverlauf.</li>
+            <li>Bauskripte zeigen nur Warnungen und Listen, keine seitenlangen Protokolle.</li>
+            <li>Prüftreffer in eine Datei schreiben und nur die Zahlen anzeigen.</li>
+            <li>Anleitungen regelmäßig entdoppeln: Verweise statt Kopien.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Vom Handy aus arbeiten</h3>
+          <p class="small">Die Sitzung läuft in der Cloud. Ihr startet sie in der Claude-App, legt das Handy weg und schaut nach etwa 40 Minuten wieder rein. Das Ergebnis liegt dann im Klassen-Repo, die Freigabe gebt ihr per Chat.</p>
+          <p class="small">Arbeitet ihr zusätzlich am PC: Legt eine einzige Quelle der Wahrheit fest. Wer am PC mit <code>robocopy /MIR</code> einen Ordner spiegelt, löscht sonst die Dateien, die in der Cloud entstanden sind. Vorher immer erst <code>git pull</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 Fächer -->
+<section id="faecher">
+  <div class="wrap">
+    <span class="tag t-acc">6 Andere Fächer</span>
+    <h2>Was sich übertragen lässt</h2>
+    <p>Das System stammt aus Mathematik und Physik. Der Ablauf passt auf jedes Fach. Einzelne Bausteine müsst ihr anpassen oder ersetzen.</p>
+    <div class="card scroll" style="padding:6px 8px">
+      <table class="tbl">
+        <thead><tr><th>Baustein</th><th>Englisch</th><th>Biologie</th><th>BWL</th></tr></thead>
+        <tbody>
+          <tr><td>Halbjahresskript mit Wochen, Schnitt</td><td><span class="chip c-ok">übertragbar</span></td><td><span class="chip c-ok">übertragbar</span></td><td><span class="chip c-ok">übertragbar</span></td></tr>
+          <tr><td>Zwei Agenten parallel, Lektor, Upload nach Ok</td><td><span class="chip c-ok">übertragbar</span></td><td><span class="chip c-ok">übertragbar</span></td><td><span class="chip c-ok">übertragbar</span></td></tr>
+          <tr><td>Lernabenteuer (Level, Gegner, Partner, Quiz)</td><td><span class="chip c-an">anpassen</span><br><span class="small muted">Lesen, Wortschatz, Schreiben statt Rechnen</span></td><td><span class="chip c-an">anpassen</span><br><span class="small muted">Diagramme, Abbildungen, Versuche</span></td><td><span class="chip c-ok">übertragbar</span><br><span class="small muted">Rechnen und Entscheiden passen direkt</span></td></tr>
+          <tr><td>Aufgabenblatt mit Operatoren und Erwartungshorizont</td><td><span class="chip c-an">anpassen</span><br><span class="small muted">Operatoren und Bewertungsraster des Fachs</span></td><td><span class="chip c-an">anpassen</span><br><span class="small muted">Operatoren des Fachs</span></td><td><span class="chip c-an">anpassen</span><br><span class="small muted">Operatoren, Belege, Kontenrahmen</span></td></tr>
+          <tr><td>Alles mit Python nachrechnen</td><td><span class="chip c-er">ersetzen</span><br><span class="small muted">durch Prüfliste: Niveau, Lösungsschlüssel eindeutig</span></td><td><span class="chip c-an">teilweise</span><br><span class="small muted">Messwerte, Diagramme, Statistik</span></td><td><span class="chip c-ok">übertragbar</span><br><span class="small muted">Kalkulation, Abschreibung, Salden</span></td></tr>
+          <tr><td>Stil- und Sprachprüfung</td><td><span class="chip c-an">anpassen</span><br><span class="small muted">LanguageTool auf Englisch, Anweisungen auf Deutsch</span></td><td><span class="chip c-ok">übertragbar</span></td><td><span class="chip c-ok">übertragbar</span></td></tr>
+          <tr><td>Formeln mit KaTeX, Taschenrechner in der App</td><td><span class="chip c-er">weglassen</span></td><td><span class="chip c-an">selten</span></td><td><span class="chip c-ok">übertragbar</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tabs" role="tablist" style="margin-top:22px">
+      <button type="button" role="tab" aria-selected="true" data-fach="en">🇬🇧 Englisch</button>
+      <button type="button" role="tab" aria-selected="false" data-fach="bio">🧬 Biologie</button>
+      <button type="button" role="tab" aria-selected="false" data-fach="bwl">📊 BWL</button>
+    </div>
+    <div id="fach"></div>
+  </div>
+</section>
+
+<!-- 7 Pakete -->
+<section id="pakete">
+  <div class="wrap">
+    <span class="tag t-acc">7 Weitere Pakete</span>
+    <h2>Wenn das Wochenpaket läuft</h2>
+    <p>Auf demselben Fundament sind weitere Pakete entstanden. Sie nutzen dieselben Skripte, Agenten und Prüfungen und unterscheiden sich vor allem im Input.</p>
+    <div class="grid g3 pk">
+      <div class="card">
+        <span class="tag t-in">Klausuren</span>
+        <h3 style="margin-top:8px">Klausurpaket und Klausurbesprechung</h3>
+        <button type="button" class="zoom" data-lb="img/probeklausur.webp" data-cap="Probeklausur Wochen 3 bis 6"><img src="img/probeklausur.webp" alt="Probeklausur der 11BC auf dem Handy" loading="lazy"></button>
+        <dl>
+          <dt>Aufruf</dt><dd><code>/klausurpaket 11BC 3-6 90</code></dd>
+          <dt>Input</dt><dd>Wochen des Skripts, Bearbeitungszeit</dd>
+          <dt>Output</dt><dd>Probeklausur mit zwei unabhängigen Aufgaben, Schülerteil, Erwartungshorizont, Notenschlüssel und Darstellungspunkten</dd>
+          <dt>Nach der Klausur</dt><dd><code>/klausurbesprechungspaket</code> liest Klausur, Fotos der Notenverteilung und Notizen zu typischen Fehlern. Daraus entsteht eine Schülerseite für 30 Minuten Besprechung mit Selbstdiagnose und Berichtigungsauftrag, dazu ein privater Besprechungsplan.</dd>
+          <dt class="nur-genau">Unterschied</dt><dd class="nur-genau">Ein Autor statt zwei, ein Lektor. Nachklausuren entstehen mit höherem Anteil an Transfer und bleiben im privaten Repo.</dd>
+        </dl>
+      </div>
+      <div class="card">
+        <span class="tag t-ve">Praktikum</span>
+        <h3 style="margin-top:8px">Laborpaket</h3>
+        <button type="button" class="zoom" data-lb="img/laborfreigabe.webp" data-cap="Laborfreigabe vor dem Versuch (13NF, Ultraschallprüfung)"><img src="img/laborfreigabe.webp" alt="Laborfreigabe in der Praktikumseinheit der 13NF" loading="lazy"></button>
+        <dl>
+          <dt>Aufruf</dt><dd><code>/laborpaket 13NF 3-1_normalpruefkopf</code></dd>
+          <dt>Input</dt><dd>Praktikumsanleitung als PDF oder Markdown, optional Messwerte, Bilder und Sicherheitshinweise</dd>
+          <dt>Output</dt><dd>45 Minuten, die den echten Versuch begleiten: Sicherheit mit Laborfreigabe, Aufbau, Versuch mit Rollen, Auswertung mit den eigenen Messwerten. Dazu Versuchsauswertung als PDF mit Lösung und Unterrichtsplanung.</dd>
+          <dt class="nur-genau">Unterschied</dt><dd class="nur-genau">Gleiche Engine im Praktikumsmodus. Sicherheitsfragen kommen nur aus der Anleitung, nichts wird erfunden. Die Lehrkraft prüft sie vor dem Einsatz.</dd>
+        </dl>
+      </div>
+      <div class="card">
+        <span class="tag t-out">Lernstrategie</span>
+        <h3 style="margin-top:8px">Lerncoach</h3>
+        <button type="button" class="zoom" data-lb="img/lerncoach.webp" data-cap="Lerncoach der 11BC"><img src="img/lerncoach.webp" alt="Lerncoach der 11BC auf dem Handy" loading="lazy"></button>
+        <dl>
+          <dt>Aufruf</dt><dd><code>/lerncoach 11BC</code></dd>
+          <dt>Input</dt><dd>Halbjahresskript (einmal pro Halbjahr)</dd>
+          <dt>Output</dt><dd>Eine Seite, die Schüler durchs Halbjahr begleitet: Wochenrhythmus, Ampel zur Selbsteinschätzung, 15-Minuten-Karten zum Abrufen, Fehlerprotokoll und Klausurplaner. Dazu eine zweite Seite, die die Lernstrategien wissenschaftlich begründet.</dd>
+          <dt class="nur-genau">Unterschied</dt><dd class="nur-genau">Gemeinsame Vorlage und gemeinsame Coach-Texte für alle Klassen. Pro Klasse schreibt die KI nur die Daten (Etappen, Ich-kann-Sätze, Abrufkarten, typische Fehler).</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 Recht -->
+<section id="recht">
+  <div class="wrap">
+    <span class="tag t-acc">8 Datenschutz und Recht</span>
+    <h2>Was öffentlich wird und was nicht</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Datenschutz</h3>
+        <ul style="padding-left:1.2em;margin:0">
+          <li><b>Keine Schülerdaten an die KI.</b> Keine Namen, keine Einzelnoten. Bei der Klausurbesprechung nur die Notenverteilung der Klasse.</li>
+          <li><b>Zwei Welten trennen.</b> Privat: Skripte, Kursdaten, Klausuren, Nachklausuren. Öffentlich: nur das Material für die Schüler.</li>
+          <li><b>Liste „Nie hochladen“</b> in <code>CLAUDE.md</code>. Vor jedem Push zeigt Claude die Änderungsliste, die Lehrkraft gibt frei.</li>
+          <li><b>Lehrkraft-Code</b> für Freigaben im Unterricht steht nur in der privaten <code>kurs.json</code>. Das Bauskript bricht ab, wenn er in einer öffentlichen Datei auftaucht. Er ist eine Unterrichtsbremse, kein Passwortschutz.</li>
+          <li><b>Schulische Vorgaben</b> zur Nutzung von KI-Diensten klärt ihr vorab mit Schulleitung und Datenschutz.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Urheberrecht und Lizenz</h3>
+        <ul style="padding-left:1.2em;margin:0">
+          <li><b>Urheberrecht entsteht automatisch.</b> Ein öffentliches Repo ohne Lizenz heißt „alle Rechte vorbehalten“. Schüler dürfen lesen und lernen, offiziell weiterverwenden darf niemand.</li>
+          <li><b>Für Klassen-Repos</b> empfiehlt sich ein Hinweis wie „© Name, Schule, für den Unterricht der Klasse“, aber keine offene Lizenz. Steckt irgendwo fremdes Material drin (Schulbuchabbildung, Foto), würde eine offene Lizenz etwas freigeben, das euch nicht gehört.</li>
+          <li><b>Diese Anleitung</b> steht unter CC BY 4.0, weil sie nur eigene Texte, Vorlagen und Screenshots enthält.</li>
+          <li><b>KI-Anteil:</b> Rein KI-erzeugte Inhalte sind in Deutschland eher nicht geschützt. Eure Auswahl, Struktur und Überarbeitung können es sein.</li>
+          <li class="small muted">Das ist eine Einschätzung aus der Praxis, keine Rechtsberatung.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 Kosten -->
+<section id="kosten">
+  <div class="wrap">
+    <span class="tag t-acc">9 Aufwand und Kosten</span>
+    <h2>Was es kostet</h2>
+    <div class="grid g4">
+      <div class="card stat"><div class="v">≈ 40 min</div><div class="l">pro Lauf, schwankt je nach Woche. Die Lehrkraft muss dabei nicht zusehen.</div></div>
+      <div class="card stat"><div class="v">20 $</div><div class="l">pro Monat für Claude Pro. Damit laufen bei uns alle Pakete.</div></div>
+      <div class="card stat"><div class="v">0 €</div><div class="l">für GitHub: private und öffentliche Repos, GitHub Pages.</div></div>
+      <div class="card stat"><div class="v">6</div><div class="l">Dateien pro Woche: Lernabenteuer, Lernblatt, Lösungen, Aufgabenblatt als HTML und PDF, Unterrichtsplanung.</div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <p style="margin:0"><b>Und die Einrichtung?</b> Dafür gibt es keine feste Zahl. Sie hängt davon ab, wie viel ihr übernehmt und wie weit ihr ausbaut. Mit dem Startpaket steht ein erster Lauf mit einfacher Lernseite deutlich schneller als ein System wie das hier, das über Wochen gewachsen ist. Rechnet zusätzlich Zeit für das Halbjahresskript ein und für die Durchsicht der ersten Ergebnisse. Am Anfang lohnt es sich, jede Woche genau hinzusehen und die Anweisungen nachzuschärfen.</p>
+      <p class="small muted" style="margin:10px 0 0">Bei vielen Läufen kurz hintereinander können Nutzungsgrenzen des Abos greifen. Dann wartet man, bis das Kontingent wieder frei ist.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 Gelernt -->
+<section id="gelernt">
+  <div class="wrap">
+    <span class="tag t-acc">10 Erfahrungen</span>
+    <h2>Was wir gelernt haben</h2>
+    <div class="grid g2">
+      <div>
+        <div class="grid" id="lessons"></div>
+      </div>
+      <div class="card nur-genau">
+        <h3>Wie das System gewachsen ist</h3>
+        <p class="small muted">Aus der Versionsgeschichte des privaten Repos, Oktober 2026</p>
+        <ol class="tl">
+          <li><time>3. Oktober</time><br>Wochen- und Klausurpaket laufen in der Cloud. Erste Regel: vor dem Überschreiben fragen.</li>
+          <li><time>5. bis 10. Oktober</time><br>Das Lernabenteuer wächst in fünf Paketen: Glossar und Rechner, drei Stufen und sachliche Version, Partnerarbeit mit Rollen, Unterrichtsplanung, Selbsteinschätzung.</li>
+          <li><time>6. Oktober</time><br>Feste Modelle für die Subagenten. Skills entdoppelt: Verweise statt Kopien.</li>
+          <li><time>10. Oktober</time><br>Üben läuft jetzt mit Opus statt Sonnet.</li>
+          <li><time>11. Oktober</time><br>Stilregeln gegen typische KI-Zeichen mit Prüfskript, Sprachprüfung und Lektor.</li>
+          <li><time>12. bis 13. Oktober</time><br>Tokenverbrauch gesenkt. Neu: Laborpaket, Klausurbesprechung, Lerncoach.</li>
+          <li><time>22. Oktober</time><br>Zeitwerte abgestimmt, Kürzen in festen Stufen. Neuer Skill <code>/optimieren</code>, der die Anweisungen eines Pakets verschlankt.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 Glossar -->
+<section id="glossar">
+  <div class="wrap">
+    <span class="tag t-acc">11 Glossar</span>
+    <h2>Begriffe kurz erklärt</h2>
+    <input class="search" type="search" id="gsuche" placeholder="Begriff suchen …" aria-label="Glossar durchsuchen">
+    <dl class="gl" id="gliste"></dl>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>KI-Unterrichtspakete</b> · Timon Netzel, Lore-Lorentz-Schule · Text, Bilder und Vorlagen unter <a href="https://creativecommons.org/licenses/by/4.0/deed.de">CC BY 4.0</a>.</p>
+    <p>Alle Namen, Firmen und Zahlen in den Screenshots sind erfunden. Diese Seite wurde mit Claude Code erstellt und von der Lehrkraft geprüft. Quelle und Vorlagen: <a href="https://github.com/TimonNetzel/ki_unterrichtspakete">github.com/TimonNetzel/ki_unterrichtspakete</a></p>
+  </div>
+</footer>
+
+<div id="pop" role="tooltip"></div>
+<dialog id="lb"><button type="button" aria-label="Schließen">✕</button><img alt=""><p></p></dialog>
+
+<script>
+var VORLAGEN = [{"titel": "CLAUDE.md", "pfad": "CLAUDE.md", "zweck": "Hausregeln für jede Sitzung: Sprache, Ordner, Upload nur nach Ok.", "text": "# Unterrichtsmaterial mit Claude Code\n\nDieses Repo enthält die Skills, Werkzeuge und Halbjahresskripte, aus denen `/wochenpaket` jede Woche Lernmaterial baut. Die Sitzung läuft in der Cloud unter Linux.\n\n## Sprache\n- Generisches Maskulinum (Schüler, Lehrkraft). Keine Doppelformen. (Eure Schule entscheidet das selbst. Wichtig ist nur, dass es hier einmal festgelegt ist.)\n- Keine Gedankenstriche, keine Semikolons. Stattdessen ein neuer Satz oder ein Komma.\n- Kurze, konkrete Sätze mit Beispiel statt allgemeiner Aussagen. Keine Floskeln wie „In der heutigen Zeit“.\n- Prüfung: `python3 _werkzeuge/stilcheck.py <Dateien>`. Fehler beheben, Hinweise kritisch ansehen.\n\n## Struktur\n- `.claude/skills/`: wochenpaket, lerneinheit-vorbereiten, lernseite, aufgabenblatt\n- `.claude/agents/`: `autor` (erstellt Material), `lektor` (prüft Sprache in den Quelldateien)\n- `_werkzeuge/`: `schnitt.py` (Skript zuschneiden), `lernen_bauen.sh` und `ueben_bauen.sh` (bauen, testen, erst bei Erfolg ins Klassen-Repo kopieren), `index_bauen.py` (Übersichtsseite), `stilcheck.py`\n- `<KLASSE>/quellen/*.md`: Halbjahresskript der Klasse. `<KLASSE>/kurs.json`: Kursdaten (Fach, Schuljahr, Titel, optional Lehrkraft-Code und Stil).\n- `<KLASSE>/github/`: Klon des öffentlichen Klassen-Repos, nur in der Sitzung angelegt, steht in `.gitignore`.\n- `_werkzeuge/arbeit/`: Zwischendateien, steht in `.gitignore`.\n\n## Klassen-Repos (öffentlich, mit GitHub Pages)\n- 11A: `<github-name>/11A_Biologie`\n- (je Klasse eine Zeile)\n\nAblauf: Repo mit `add_repo` (access `push`) an die Sitzung hängen, dann genau einmal `git clone --depth 1` nach `<KLASSE>/github`, sonst `git pull`. Branch ist `main`.\n\n## Arbeitsweise\n- Alle relativen Pfade beziehen sich auf die Repo-Wurzel.\n- Python heißt `python3`. Node ist vorhanden. Chromium für PDFs liegt unter `/opt/pw-browsers`.\n- Halbjahresskripte nie vollständig lesen, immer erst mit `schnitt.py` schneiden.\n- Korrekturen nur in den Quelldateien unter `_werkzeuge/arbeit/`, nie in den fertigen Dateien im Klassen-Repo.\n\n## GitHub-Upload\n- Nie ohne klares Ok der Lehrkraft im Chat committen oder pushen. Vorher `git add -A`, `git status --short`, Änderungsliste zeigen (neu, geändert, gelöscht), Ok abwarten.\n- Nie hochladen: `kurs.json`, Halbjahresskripte, Klausuren, alles mit dem Lehrkraft-Code.\n- Commit-Identität: `-c user.name=\"Claude\" -c user.email=\"noreply@anthropic.com\"`.\n"}, {"titel": "Skill wochenpaket", "pfad": ".claude/skills/wochenpaket/SKILL.md", "zweck": "Der Ablauf: schneiden, zwei Agenten parallel, prüfen, Lektorat, Upload.", "text": "---\nname: \"wochenpaket\"\ndescription: \"Nur bei ausdrücklichem Aufruf (/wochenpaket Klasse Woche MinutenLernen MinutenÜben): erstellt für eine Klasse und Woche die Lernseite lernen.html mit Lernblatt-PDF und Lösung sowie das Aufgabenblatt ueben.html mit PDF im Ordner woche-NN des Klassen-Repos.\"\n---\n\n# wochenpaket\n\n**Sprache und Stil: verbindlich nach `CLAUDE.md`, Abschnitt „Sprache“.** Dort stehen auch Struktur, Klassen-Repos und die Upload-Regeln.\n\nAufruf: `/wochenpaket <Klasse> <Woche> [MinutenLernen] [MinutenÜben]`, z. B. `/wochenpaket 11A 6 90 20`. Fehlt MinutenLernen, gilt 90. Fehlt MinutenÜben, gilt 20. Keine Rückfragen außer: Fehlt Klasse oder Woche, frage genau einmal in einem Satz.\n\n## Pfade\n- `NN` = Woche zweistellig. `<A>` = `_werkzeuge/arbeit/<Klasse>-wNN` (alle Zwischendateien). `<G>` = `<Klasse>/github` (Klon des Klassen-Repos). Ziel: `<G>/woche-NN/`.\n- Lernen: Quellen in `<A>/lernen/`. Bauen und kopieren nur mit `bash _werkzeuge/lernen_bauen.sh <Klasse> <Woche> [--test]`.\n- Üben: Quellen in `<A>/ueben/`. Bauen und kopieren nur mit `bash _werkzeuge/ueben_bauen.sh <Klasse> <Woche>`.\n\n## Regeln\n- Nie ohne ausdrückliches Ok der Lehrkraft committen oder pushen (Schritt 7).\n- Ändern darfst du nur `<G>/woche-NN/`, `<G>/index.html` (nur über `index_bauen.py`) und `<A>`.\n- Das Halbjahresskript nie vollständig lesen, immer erst schneiden.\n\n## Schritte\n0. **Klon.** Klassen-Repo laut `CLAUDE.md` anhängen und klonen oder aktualisieren. Scheitert der Zugriff, den Grund melden und abbrechen.\n1. **Prüfen.** Halbjahresskript in `<Klasse>/quellen/*.md` suchen. Fehlt es, Pfad melden und abbrechen. Liegen in `<G>/woche-NN/` schon Dateien, genau einmal fragen: alles ersetzen, nur Lernen, nur Üben oder abbrechen.\n2. **Schneiden.** `python3 _werkzeuge/schnitt.py <skript.md> <Woche> <A>`. Ergebnis: `schnitt_woche.md` (nur diese Woche) und `schnitt_bis.md` (Wochen 1 bis Woche).\n3. **Agenten.** Starte beide gleichzeitig mit `subagent_type autor`. Jeder bekommt nur Pfade, Parameter und seinen Auftrag, nicht diese Konversation.\n   - **Agent A (Lernen):** Führe `.claude/skills/lerneinheit-vorbereiten/SKILL.md` mit `<Klasse> <Woche>` aus. Baue dann nach `.claude/skills/lernseite/SKILL.md` aus `<A>/lernen/lernen.md` die Lernseite für MinutenLernen. Bauen und testen mit `lernen_bauen.sh --test`. Rückmeldung: Abschnitte der Seite, Zeitschätzung, Warnungen des Tests.\n   - **Agent B (Üben):** Baue nach `.claude/skills/aufgabenblatt/SKILL.md` aus `<A>/schnitt_bis.md` ein Aufgabenblatt für MinutenÜben, Stoff nur Woche <Woche> mit Anschluss an die Vorwochen. Jede Zahl und jede Musterlösung mit Python nachrechnen (`<A>/ueben/nachrechnen.py`). Zum Schluss `ueben_bauen.sh`. Rückmeldung: „Nachgerechnet: n Aufgaben, Abweichungen: …“ und Liste der Teilaufgaben.\n4. **Prüfen und Lektorat.**\n   1. In `<G>/woche-NN/` liegen lernen.html, lernen.pdf, lernen_loesungen.pdf, ueben.html, ueben.pdf. Stichprobe mit `pdftotext`: Die Lösungs-PDF enthält Lösungen, `lernen.pdf` keine. Nichts aus späteren Wochen.\n   2. `python3 _werkzeuge/stilcheck.py <Quelldateien> > <A>/treffer.txt`\n   3. Starte einen frischen Subagenten `lektor`. Er bekommt nur die Quelldateien und `<A>/treffer.txt` und korrigiert direkt in den Quellen.\n   4. Neu bauen (beide Bauskripte), Stilprüfung erneut.\n5. **Übersichtsseite:** `python3 _werkzeuge/index_bauen.py <Klasse>`.\n6. **Abschlussmeldung** in höchstens 15 Zeilen: erstellte Dateien, Standardannahmen, Zeitschätzung, Auffälligkeiten.\n7. **Upload, nie ohne Ok:** `git -C <G> add -A`, `git -C <G> status --short`, Änderungsliste zeigen, auf ein klares Ok warten. Erst dann committen und `git -C <G> push origin main`.\n\nScheitert ein Agent, melde genau, was fehlt, und liefere den erfolgreichen Teil trotzdem.\n"}, {"titel": "Skill lerneinheit-vorbereiten", "pfad": ".claude/skills/lerneinheit-vorbereiten/SKILL.md", "zweck": "Macht aus einer Woche des Skripts eine ausführliche Lerneinheit.", "text": "---\nname: \"lerneinheit-vorbereiten\"\ndescription: \"Nur als Hilfsschritt von /wochenpaket: macht aus schnitt_woche.md eine ausführliche Lerneinheit lernen.md für den Skill lernseite.\"\n---\n\n# lerneinheit-vorbereiten\n\n**Sprache und Stil: verbindlich nach `CLAUDE.md`, Abschnitt „Sprache“.**\n\nEingabe: `<Klasse> <Woche>`. `_werkzeuge/arbeit/<Klasse>-wNN/schnitt_woche.md` und `schnitt_bis.md` existieren. Lies außerdem `<Klasse>/kurs.json`. Keine Rückfragen.\n\nAufgabe: Erzeuge `_werkzeuge/arbeit/<Klasse>-wNN/lernen/lernen.md` mit diesen Abschnitten:\n\n1. `# Titel der Woche` (aus dem Skript)\n2. `## Auftrag`: Zielgruppe aus den Kursdaten, Anrede (Du, wenn das Skript nichts anderes sagt), Dauer in Minuten.\n3. `## Lernziele`: 2–3 Ziele „Am Ende kannst du …“ in Alltagssprache.\n4. `## Aufwärmen`: 3 kurze Fragen aus den **Vorwochen** laut `schnitt_bis.md`, je 4 Antworten, alle ähnlich lang, die richtige nicht die längste.\n5. `## Einstieg`: kurze Situation aus dem Berufsfeld der Klasse mit Leitfrage. Namen und Daten konstruiert.\n6. `## Lernabschnitt 1`, `## Lernabschnitt 2`: Ziel, Kernaussagen, Aufträge, je 2–3 Sätze „Ich kann …“.\n7. `## Fachbegriffe`: Tabelle Begriff | Erklärung in einfacher Sprache | Beispiel.\n8. `## Abschlussprodukt`: aus dem Lernauftrag der Woche.\n9. `## Referenzergebnisse`: vollständige Lösungen. Rechne jede Zahl mit Python nach.\n10. `**Stoffgrenze:**` Was NICHT eingeführt werden darf (Stoff späterer Wochen).\n\n## Regeln\n- Nur Stoff der Woche und der Vorwochen, nichts aus späteren Wochen.\n- Angaben zu Personen, Jahren und Studien nur, wenn sie sicher sind. Im Zweifel weglassen.\n- Umfang knapp halten, damit die Weiterverarbeitung wenig Token kostet.\n- Gib am Ende nur den Pfad der Datei und eine Zeile Zusammenfassung zurück.\n"}, {"titel": "Skill lernseite", "pfad": ".claude/skills/lernseite/SKILL.md", "zweck": "Einstiegsfassung der interaktiven Lernseite mit fester Vorlage.", "text": "---\nname: \"lernseite\"\ndescription: \"Macht aus einer Lerneinheit lernen.md eine interaktive Lernseite als eine HTML-Datei (offline, Handy und Tablet) plus Lernblatt-PDF und Lösungs-PDF.\"\n---\n\n# lernseite\n\n**Sprache und Stil: verbindlich nach `CLAUDE.md`, Abschnitt „Sprache“.**\n\nEinstiegsfassung. Ziel ist eine schlichte, verlässliche Seite. Ausbauen könnt ihr sie später Schritt für Schritt (Level, Punkte, Partnerarbeit, Quiz).\n\n## Grundsatz: feste Vorlage, nur Inhalt neu\nBeim ersten Mal baust du mit der Lehrkraft eine feste Vorlage `_werkzeuge/lernseite/vorlage.html` (Design, Navigation, Aufgabentypen, Druckansicht). Danach schreibst du pro Woche **nur** die Inhaltsdatei `content.js`. Das Bauskript setzt beides zusammen. So sieht jede Woche gleich aus und Fehler im Design entstehen nicht neu.\n\n## Aufbau der Seite\n1. Lernziele mit Selbsteinschätzung (unsicher, teilweise, sicher)\n2. Aufwärmen (3 Fragen aus den Vorwochen)\n3. Einstieg mit Leitfrage\n4. Je Lernabschnitt: kurze Erklärung, 2–4 Aufgaben mit „Prüfen“-Knopf, Hilfen in Stufen, Lösung erst auf Wunsch\n5. Abschlussprodukt mit Checkliste\n6. Quiz zu den Fachbegriffen\n\nAufgabentypen in `content.js`: `mcq` (Auswahl), `cloze` (Lücken), `calc` (Zahl mit Toleranz), `order` (Reihenfolge), `write` (freier Text mit Musterantwort).\n\n## Ausgabe\n- `lernen.html`: eine Datei, alles eingebettet, ohne Internet nutzbar\n- `lernen.pdf`: Lernblatt zum Ausfüllen (höchstens 2 Seiten)\n- `lernen_loesungen.pdf`: gleiches Blatt mit Lösungen\n\n## Test (im Bauskript)\n- Die Seite mit Playwright auf 390 px (Handy) und 820 px (Tablet) öffnen, jede Aufgabe einmal richtig lösen, Screenshots ablegen.\n- Keine JavaScript-Fehler, kein horizontales Scrollen, jede Aufgabe lösbar.\n- Zeitschätzung: 1,5 min je Aufgabe, 0,5 min je Quizfrage. Liegt sie über der Dauer, kürzen (zuerst Wiederholungen, dann Bonusaufgaben) und jede Kürzung melden.\n"}, {"titel": "Skill aufgabenblatt", "pfad": ".claude/skills/aufgabenblatt/SKILL.md", "zweck": "Aufgabenblatt mit Operatoren, Anforderungsbereichen und Erwartungshorizont.", "text": "---\nname: \"aufgabenblatt\"\ndescription: \"Erstellt aus einem Skriptausschnitt ein Aufgabenblatt im Stil der Abiturvorgaben des Fachs als HTML mit Schülerteil, Lehrkraftteil und Lösung plus PDF des Schülerteils.\"\n---\n\n# aufgabenblatt\n\n**Sprache und Stil: verbindlich nach `CLAUDE.md`, Abschnitt „Sprache“.** Anrede „Sie“, Operatoren laut den Vorgaben des Fachs.\n\n## Standard\n- Ein Kopf (Name, Klasse, Datum, Zeit, Hilfsmittel, Punkte).\n- **Eine** Ausgangssituation mit **einem** Materialblock (M1, M2, …), danach 6–9 Teilaufgaben.\n- Jede Teilaufgabe beginnt mit einem **fett gesetzten Operator** und trägt Anforderungsbereich (I, II, III) und Punkte.\n- Umfang: etwa 0,6 Punkte je Minute. Verteilung: I 30–40 %, II 45–55 %, III 15–20 %.\n- Baut eine Teilaufgabe auf einer anderen auf, gib Ersatzwerte an. Ersatzwerte verraten nie die richtige Lösung.\n- Daten sind konstruiert, Firmennamen fiktiv.\n\n## Ansichten in der HTML-Datei\nGesamt, Schülerteil, Lehrkraftteil (Stoffgrenze, Erwartungshorizont, typische Fehler), Schülerlösung. Ein Drucken-Knopf druckt die gewählte Ansicht auf A4.\n\n## Operatoren\nHier die Operatorenliste eures Fachs eintragen, mit typischem Anforderungsbereich, z. B.:\n- nennen (I), beschreiben (I–II), erklären (II), auswerten (II), beurteilen (III)\n\n## Prüfen vor der Abgabe\n- Jede Zahl und jede Musterlösung mit Python nachrechnen (`nachrechnen.py`), Abweichungen sofort korrigieren.\n- Nichts aus späteren Wochen.\n- Stilprüfung über `content.html`.\n"}, {"titel": "Agent autor", "pfad": ".claude/agents/autor.md", "zweck": "Subagent, der das Material erstellt (Opus, Aufwand hoch).", "text": "---\nname: autor\ndescription: Subagent für anspruchsvolles Unterrichtsmaterial (Lernseite, Aufgabenblatt). Nur vom Skill wochenpaket verwendet.\nmodel: opus\neffort: high\n---\n\nDu erstellst Unterrichtsmaterial und arbeitest genau nach den Pfaden, Parametern und der Aufgabe, die dir der Aufrufer nennt. Stelle keine Rückfragen. Skills, die der Aufrufer mit Pfad nennt (`.claude/skills/<name>/SKILL.md`), liest du direkt aus dieser Datei.\n\nSprache und Stil: verbindlich nach `CLAUDE.md`, Abschnitt „Sprache“. Prüfung: `python3 _werkzeuge/stilcheck.py <Quelldateien>`.\n\nRechne jede Zahl, die im Material vorkommt, mit Python nach, bevor du fertig meldest.\n"}, {"titel": "Agent lektor", "pfad": ".claude/agents/lektor.md", "zweck": "Subagent, der die Sprache prüft (Sonnet, Aufwand hoch).", "text": "---\nname: lektor\ndescription: Lektor für fertiges Unterrichtsmaterial (Rechtschreibung, Grammatik, Zeichensetzung, Wortwahl) in den Quelldateien. Vom Skill wochenpaket verwendet.\nmodel: sonnet\neffort: high\n---\n\nDu bist Lektor. Du bekommst Dateipfade und eine Trefferliste der Stilprüfung und korrigierst direkt in diesen Quelldateien. Stelle keine Rückfragen.\n\nLies jeden Text vollständig, auch Texte, die nur bei falschen Antworten, in Hinweisen oder Lösungen erscheinen. Prüfe Rechtschreibung, Grammatik, Zeichensetzung und Wortwahl. Treffer der Prüfskripte sind Verdachtsfälle: Fachwörter bleiben stehen.\n\nNicht ändern: Zahlen, Formeln, Lösungen, Punkte, Struktur, Schlüssel und Bezeichner im Code, HTML-Tags. Antwortoptionen einer Auswahlaufgabe behalten ihre ungefähre Länge (die richtige Option nie zur längsten machen).\n\nSprache und Stil: verbindlich nach `CLAUDE.md`, Abschnitt „Sprache“.\n\nRückmeldung: Liste „Datei: vorher → nachher“ je Änderung, danach die Zahl der Änderungen je Datei. Nichts bauen, nichts kopieren.\n"}, {"titel": "Erster Auftrag", "pfad": "erster-auftrag.md", "zweck": "Text für die erste Sitzung: Claude richtet den Rest selbst ein.", "text": "# Erster Auftrag an Claude\n\nDiesen Text kopiert ihr in die erste Cloud-Sitzung von Claude Code, die auf eurem eigenen privaten Repo läuft. Die Teile in spitzen Klammern ersetzt ihr vorher.\n\n---\n\nIch bin Lehrkraft für <Fach> am <Schulform> und möchte jede Woche Lernmaterial aus meinem Halbjahresskript bauen lassen.\n\n1. Klone das öffentliche Repo `TimonNetzel/ki_unterrichtspakete` nach `/tmp/vorlage` und kopiere den Inhalt von `vorlagen/` in die Wurzel meines Repos. Benenne den Ordner `KLASSE` in `<Klasse>` um.\n2. Passe `CLAUDE.md` an: Fach, Klassen, Namen der Klassen-Repos (`<github-name>/<Klasse>_<Fach>`).\n3. Lege `.gitignore` an mit `*/github/`, `_werkzeuge/arbeit/`, `node_modules/` und `__pycache__/`.\n4. Baue die fehlenden Werkzeuge in `_werkzeuge/` (Beschreibung in `CLAUDE.md` und in den Skills):\n   - `stilcheck.py`: meldet Gedankenstriche, Semikolons und Floskeln in HTML, JS und MD, mit Zeilennummer.\n   - `lernen_bauen.sh` und `ueben_bauen.sh`: bauen aus den Quellen in `_werkzeuge/arbeit/<Klasse>-wNN/` die fertigen Dateien, testen sie im Browser (Playwright), drucken die PDFs mit Chromium und kopieren **erst nach bestandenem Test** nach `<Klasse>/github/woche-NN/`.\n   - `index_bauen.py`: baut aus den Ordnern `woche-NN` die Übersichtsseite `index.html` des Klassen-Repos.\n5. Baue mit mir zusammen die feste Vorlage für die Lernseite (Skill `lernseite`). Zeig mir zuerst einen Entwurf mit Beispielinhalt.\n6. Zeig mir alle Änderungen und warte auf mein Ok, bevor du committest oder pushst.\n\nStelle Rückfragen, bevor du loslegst, wenn etwas unklar ist.\n"}, {"titel": "Halbjahresskript", "pfad": "KLASSE/quellen/halbjahresskript_vorlage.md", "zweck": "Beispiel für das Format des Skripts (Biologie).", "text": "# Biologie 11.1: Stoffwechsel verstehen\n\n## Kursdaten\n\n| Angabe | Kursprofil |\n|---|---|\n| Klasse / Fach | 11A, Biologie |\n| Schuljahr / Halbjahr | 2026/2027, Halbjahr 11.1 |\n| Bildungsgang | (euer Bildungsgang) |\n| Fachbereich | Gesundheit und Soziales |\n\n**Kursprofil:** Problemstellungen aus Pflege, Labor und Ernährung bilden den Anwendungskontext.\n\n**Lernweg:** Zelle und Membran → Enzyme → Atmung und Gärung → Fotosynthese. Genetik gehört hier noch nicht zum Stoff.\n\n## Kapitel 1: Enzyme als Biokatalysatoren\n\n### Woche 1: Wie Enzyme arbeiten\n\n**Einstieg: Das 90-Grad-Waschmittel.** Eine Werbung verspricht: „Mit Enzymen wäscht unser Pulver bei 90 °C besonders gründlich.“ Entscheide, ob du der Werbung glaubst, und notiere, was du über Enzyme wissen müsstest.\n\n**Kern:** Enzyme sind Proteine, die Reaktionen beschleunigen, ohne verbraucht zu werden. Substrat und aktives Zentrum passen nach dem Schlüssel-Schloss-Prinzip zusammen. Jedes Enzym hat ein Temperatur- und ein pH-Optimum. Hohe Temperaturen zerstören die räumliche Struktur dauerhaft (Denaturierung).\n\n**Lernauftrag:** Werte eine Messreihe zur Enzymaktivität bei verschiedenen Temperaturen aus, zeichne das Diagramm und beurteile die Werbeaussage.\n\n### Woche 2: Enzymaktivität messen\n\n**Einstieg:** …\n\n**Kern:** …\n\n**Lernauftrag:** …\n\n**Kapitelbeispiel (Referenzergebnisse):** Messreihe Katalase, 10 °C: 4 ml O₂/min, 20 °C: 9 ml O₂/min, 37 °C: 15 ml O₂/min, 60 °C: 2 ml O₂/min. Optimum bei etwa 37 °C.\n\n## Kapitel 2: Atmung und Gärung\n\n### Woche 3: …\n"}, {"titel": "kurs.json", "pfad": "KLASSE/kurs.json", "zweck": "Kursdaten der Klasse. Bleibt im privaten Repo.", "text": "{\n  \"fach\": \"Biologie\",\n  \"schuljahr\": \"2026/27\",\n  \"titel\": \"Stoffwechsel verstehen\",\n  \"code\": \"HIER-EIGENEN-CODE\",\n  \"stil\": \"sachlich\"\n}\n"}, {"titel": "schnitt.py", "pfad": "_werkzeuge/schnitt.py", "zweck": "Schneidet das Halbjahresskript auf eine Woche zu.", "text": "#!/usr/bin/env python3\n\"\"\"schnitt.py: schneidet ein Halbjahresskript (.md) für einen Wochenlauf zu.\n\nAufruf:\n    python3 schnitt.py <skript.md> <woche> <ausgabeordner>\n\nErzeugt im Ausgabeordner:\n    schnitt_woche.md  Kopf + Abschnitt der Woche (Eingabe für lernen.md)\n    schnitt_bis.md    Kopf + Wochen 1 bis <woche> (Eingabe für das Aufgabenblatt)\n\nErwartetes Format: Wochen als Überschrift \"### Woche <n> ...\", Kapitel als \"## ...\".\nDer Kopf ist alles vor dem ersten Kapitel. Ein Abschnitt \"## Arbeitsauftrag an Claude\"\nwird verworfen, damit eine Anweisung im Skript nicht versehentlich ausgeführt wird.\n\"\"\"\nimport os\nimport re\nimport sys\n\n\ndef main():\n    if len(sys.argv) != 4:\n        sys.exit(__doc__)\n    pfad, woche, ziel = sys.argv[1], int(sys.argv[2]), sys.argv[3]\n    with open(pfad, encoding=\"utf-8\") as f:\n        zeilen = f.read().replace(\"\\r\\n\", \"\\n\").split(\"\\n\")\n\n    kopf, wochen, kapitel = [], {}, \"\"\n    aktuell = None   # Nummer der laufenden Woche\n    im_kopf = True\n    verwerfen = False\n    for z in zeilen:\n        if z.startswith(\"## \"):\n            name = z[3:].strip().lower()\n            verwerfen = name.startswith(\"arbeitsauftrag\")\n            if name.startswith(\"kursdaten\"):\n                kopf.append(z)\n            elif not verwerfen:\n                im_kopf, kapitel, aktuell = False, z, None\n            continue\n        if verwerfen:\n            continue\n        m = re.match(r\"###\\s+Woche\\s+(\\d+)\", z)\n        if m:\n            aktuell = int(m.group(1))\n            wochen[aktuell] = [kapitel, \"\"]\n        if im_kopf:\n            kopf.append(z)\n        elif aktuell is not None:\n            wochen[aktuell].append(z)\n\n    if woche not in wochen:\n        sys.exit(f\"Woche {woche} nicht gefunden. Vorhanden: {sorted(wochen)}\")\n\n    os.makedirs(ziel, exist_ok=True)\n    k = \"\\n\".join(kopf).strip() + \"\\n\\n\"\n    with open(os.path.join(ziel, \"schnitt_woche.md\"), \"w\", encoding=\"utf-8\") as f:\n        f.write(k + \"\\n\".join(wochen[woche]).strip() + \"\\n\")\n    bis = [w for w in sorted(wochen) if w <= woche]\n    with open(os.path.join(ziel, \"schnitt_bis.md\"), \"w\", encoding=\"utf-8\") as f:\n        f.write(k + \"\\n\\n\".join(\"\\n\".join(wochen[w]).strip() for w in bis) + \"\\n\")\n    print(f\"schnitt_woche.md: Woche {woche}, schnitt_bis.md: Wochen {bis[0]} bis {woche}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"}];
+
+var GLOSSAR = {
+  agent:["Agent","Eine KI, die nicht nur antwortet, sondern selbstständig Schritte ausführt: Dateien lesen, Programme starten, Ergebnisse prüfen."],
+  subagent:["Subagent","Ein zweiter Agent, den die Hauptsitzung mit einem klaren Auftrag startet. Er beginnt mit leerem Gedächtnis und meldet nur sein Ergebnis zurück."],
+  effort:["Aufwand","Einstellung, wie gründlich ein Modell nachdenkt, bevor es antwortet. Hoch heißt langsamer, aber sorgfältiger."],
+  bauskript:["Bauskript","Ein kleines Programm, das aus den Quelldateien die fertigen Dateien baut, sie testet und erst dann an ihren Platz kopiert."],
+  claudecode:["Claude Code","Der KI-Assistent von Anthropic für Arbeit mit Dateien und Programmen. Läuft im Terminal, im Browser und in der Claude-App."],
+  claudemd:["CLAUDE.md","Textdatei mit Hausregeln im Repo. Claude liest sie zu Beginn jeder Sitzung automatisch."],
+  commit:["Commit und Push","Ein Commit speichert einen Stand der Dateien mit Beschreibung. Ein Push lädt ihn zu GitHub hoch."],
+  engine:["Engine","Der feste Teil des Lernabenteuers: Aussehen, Navigation, Aufgabentypen, Punkte. Pro Woche kommt nur neuer Inhalt dazu."],
+  freigabe:["Freigabecode","Kurzer Code, den die Lehrkraft im Unterricht nennt, damit es nach einer Plenumsphase in der App weitergeht."],
+  github:["GitHub","Plattform, auf der Dateien mit ihrer ganzen Versionsgeschichte gespeichert werden. Für Lehrkräfte kostenlos nutzbar."],
+  pages:["GitHub Pages","Dienst von GitHub, der die Dateien eines Repos als Webseite ausliefert. Die Klasse braucht nur den Link."],
+  skript:["Halbjahresskript","Markdown-Datei mit dem Plan des Halbjahres: Kursdaten, Lernweg und für jede Woche Einstieg, Kern und Lernauftrag."],
+  katex:["KaTeX","Programm, das mathematische Formeln schön darstellt. Hier wird es beim Bauen eingebettet, damit die Seite offline läuft."],
+  klon:["Klon","Eine Kopie eines Repos in der Sitzung. Änderungen daran gehen erst mit einem Push zurück zu GitHub."],
+  languagetool:["LanguageTool","Freie Rechtschreib- und Grammatikprüfung, die in der Sitzung läuft. Ihre Treffer sind Verdachtsfälle für den Lektor."],
+  code:["Lehrkraft-Code","Code pro Klasse, mit dem die Lehrkraft Haltepunkte freigibt oder Einzelarbeit erlaubt. Steht nie in öffentlichen Dateien."],
+  markdown:["Markdown","Einfaches Textformat mit # für Überschriften und ** für Fettdruck. Gut lesbar für Menschen und für KI."],
+  modell:["Modell","Das eigentliche KI-Sprachmodell. Opus ist das stärkste, Sonnet schneller und günstiger."],
+  playwright:["Playwright","Werkzeug, das einen Browser fernsteuert. Damit spielt das Bauskript das Lernabenteuer automatisch durch."],
+  prompt:["Prompt","Die Anweisung an die KI. Hier vor allem die Skills, CLAUDE.md und die Aufträge an die Subagenten."],
+  pr:["Pull Request","Vorschlag, Änderungen in den Hauptzweig eines Repos zu übernehmen. Lässt sich vor dem Übernehmen prüfen."],
+  repo:["Repo","Kurz für Repository: ein Projektordner auf GitHub mit allen Dateien und ihrer Geschichte. Privat oder öffentlich."],
+  skill:["Skill","Eine Anleitungsdatei für einen bestimmten Ablauf. Mit /name aufgerufen, z. B. /wochenpaket."],
+  token:["Token","Die Einheit, in der KI-Modelle Text verarbeiten, ungefähr eine Silbe. Je weniger Token, desto schneller und günstiger."]
+};
+
+var NODES = [
+ {id:"skript",lane:"in",ic:"📘",t:"Halbjahresskript",s:"einmal pro Halbjahr",who:[["Lehrkraft","t-in"]],img:null,
+  e:"<p>Einmal pro Halbjahr legt die Lehrkraft den Plan fest. Für jede Woche steht dort eine Einstiegssituation, der Kern des Stoffs und ein Lernauftrag. Aus diesem Plan entsteht alles andere.</p>",
+  g:"<p>Eine Markdown-Datei in <code>11BC/quellen/</code>. Oben Kursdaten, Kursprofil und Lernweg. Darunter Kapitel (<code>##</code>) und Wochen (<code>### Woche 5</code>), jeweils mit <b>Einstieg</b>, <b>Kern</b>, <b>Lernauftrag</b> und am Kapitelende einem Zahlenbeispiel mit Referenzergebnissen.</p><pre>### Woche 1: Daten ordnen und fair darstellen\n\n**Einstieg: Zwei Grafiken, eine Behauptung.** Ein Unternehmens-\nnewsletter meldet einen „dramatischen Umsatzanstieg“. …\n\n**Kern:** Unterscheide Merkmal, konkrete Ausprägung und\nWertepaar. …\n\n**Lernauftrag:** Prüfe einen Datensatz, zeichne ein\nvollständig beschriftetes Diagramm …</pre><div class='why'>Tipp: Das Skript selbst darf mit KI entstehen, z. B. aus Lehrplan und eigenen Unterlagen. Die Zahlenbeispiele prüft ihr selbst, denn alle späteren Lösungen bauen darauf auf.</div>"},
+ {id:"kurs",lane:"in",ic:"🗂️",t:"Kursdaten",s:"kurs.json, privat",who:[["Lehrkraft","t-in"]],img:null,
+  e:"<p>Ein kleiner Steckbrief der Klasse: Fach, Schuljahr, Titel und ob das Lernabenteuer verspielt oder eher sachlich wirken soll.</p>",
+  g:"<pre>{\n  \"fach\": \"Mathematik\",\n  \"schuljahr\": \"2026/27\",\n  \"titel\": \"Von Daten zu Funktionen\",\n  \"code\": \"…\",\n  \"stil\": \"sachlich\"\n}</pre><p><code>code</code> ist der Lehrkraft-Code für Freigaben im Unterricht. Die Datei liegt nur im privaten Repo und wird für den Bau kurz ins Klassen-Repo kopiert, aber nie hochgeladen.</p>"},
+ {id:"aufruf",lane:"in",ic:"💬",t:"Aufruf im Chat",s:"/wochenpaket 11BC 5 90 20",who:[["Lehrkraft","t-in"]],img:null,
+  e:"<p>Ein Satz in der Claude-App, auch vom Handy: Klasse, Woche, Minuten fürs Lernen und Minuten fürs Üben. Danach stellt Claude keine Rückfragen mehr, außer wenn für die Woche schon Material existiert.</p>",
+  g:"<pre>/wochenpaket 11BC 5 90 20</pre><p>Fehlen die Minuten, gelten 90 und 20. Liegen in <code>woche-05/</code> schon Dateien, fragt Claude genau einmal: alles ersetzen, nur Lernen, nur Üben oder abbrechen.</p>"},
+ {id:"vorb",lane:"ve",ic:"🔧",t:"Vorbereiten",s:"Klassen-Repo holen, prüfen",who:[["Hauptsitzung","t-ve"]],img:null,
+  e:"<p>Claude holt sich eine Kopie der Klassen-Webseite und schaut nach, ob für die Woche schon etwas existiert.</p>",
+  g:"<p>Das öffentliche Klassen-Repo wird an die Sitzung gehängt und mit <code>git clone --depth 1</code> nach <code>11BC/github</code> geklont (oder per <code>pull</code> aktualisiert). <code>klon.sh</code> kopiert <code>kurs.json</code> hinein und prüft, dass sie nicht im <code>git status</code> auftaucht.</p>"},
+ {id:"schnitt",lane:"ve",ic:"✂️",t:"Schneiden",s:"schnitt.py, ohne KI",who:[["Python","t-out"]],img:null,
+  e:"<p>Ein kleines Programm schneidet aus dem Skript nur die Woche 5 heraus und dazu eine Fassung mit Woche 1 bis 5. Die KI sieht nie den Stoff späterer Wochen.</p>",
+  g:"<pre>python3 _werkzeuge/schnitt.py skript.md 5 _werkzeuge/arbeit/11BC-w05</pre><ul class='files'><li><code>schnitt_woche.md</code> für das Lernen</li><li><code>schnitt_bis.md</code> (Woche 1 bis 5) für das Üben</li></ul><div class='why'>Drei Gründe: Die KI kann keinen Stoff aus späteren Wochen einbauen, sie liest weniger Text (spart Token) und ein Abschnitt „Arbeitsauftrag an Claude“ im Skript wird entfernt, damit er nicht versehentlich ausgeführt wird.</div>"},
+ {id:"lernen",lane:"ve",pair:"a",ic:"🎮",t:"Agent Lernen",s:"Claude Opus",who:[["Subagent","t-ve"],["Opus, Aufwand hoch","t-acc"]],img:"img/level.webp",
+  e:"<p>Ein eigener KI-Agent plant die Lerneinheit: Lernziele, Einstieg, Lernabschnitte, Aufgaben, Partnerarbeit und Quiz. Dann baut er daraus das Lernabenteuer, das Lernblatt und die Unterrichtsplanung und spielt alles automatisch durch.</p>",
+  g:"<ol style='padding-left:1.2em'><li><b>Lerneinheit planen</b> (Hilfsskill <code>lernen-vorbereiten</code>): aus <code>schnitt_woche.md</code> wird <code>lernen.md</code> mit Lernzielen, Aufwärmen aus den Vorwochen, Rückwärtsplanung, Lernabschnitten, Fachbegriffen, Sprachhilfen, Partneraufgabe und nachgerechneten Referenzergebnissen.</li><li><b>Inhalt schreiben</b> (Skill <code>mint-lernabenteuer</code>): nur drei Dateien, <code>content.js</code> (App), <code>ws_content.js</code> (Lernblatt), <code>lk_content.js</code> (Planung). Die Engine ist fest.</li><li><b>Bauen und testen</b>: <code>lernen_bauen.sh 11BC 5 --test</code> spielt alles durch und schätzt die Zeit. Ist es zu lang, kürzt der Agent in acht festen Stufen und dokumentiert jede Kürzung.</li></ol>"},
+ {id:"ueben",lane:"ve",pair:"b",ic:"📝",t:"Agent Üben",s:"Claude Opus",who:[["Subagent","t-ve"],["Opus, Aufwand hoch","t-acc"]],img:"img/ueben.webp",
+  e:"<p>Gleichzeitig erstellt ein zweiter Agent das Aufgabenblatt im Abiturstil mit Musterlösung. Jede Zahl rechnet er mit einem Programm nach.</p>",
+  g:"<p>Skill <code>bk-aufgabenblatt-klausur-nrw</code> mit Vorgaben: Typ Aufgabenblatt, Stoff nur Woche 5 mit Anschluss an die Vorwochen, 20 Minuten, Anrede Sie. Eine Ausgangssituation, ein Materialblock, 6 bis 9 Teilaufgaben mit Operator, Anforderungsbereich und Punkten.</p><ul class='files'><li><code>content.html</code>, <code>figs.py</code> (Diagramme), <code>nachrechnen.py</code></li><li><code>ueben_bauen.sh</code>: Formeln mit KaTeX vorrendern, Schülerteil als PDF drucken, kopieren</li></ul><p>Rückmeldung an die Hauptsitzung: „Nachgerechnet: n Aufgaben, Abweichungen: keine“ und die Liste der Teilaufgaben.</p>"},
+ {id:"bruecke",lane:"ve",ic:"🔗",t:"Brücke",s:"Lernen ↔ Üben verknüpfen",who:[["Hauptsitzung","t-ve"]],img:null,
+  e:"<p>Claude ordnet jede Übungsaufgabe der passenden Etappe im Lernabenteuer zu. Wer eine Etappe geschafft hat, sieht dort: „Passend dazu: Aufgabe 1 b im Aufgabenblatt.“</p>",
+  g:"<pre>[{\"level\":2, \"aufgaben\":\"Aufgabe 1 a–c\", \"text\":\"Tarif als Term\"}]</pre><p>Die Datei <code>ueben.json</code> fließt beim nächsten Bau in das Lernabenteuer ein.</p>"},
+ {id:"pruefen",lane:"ve",ic:"🔍",t:"Prüfen",s:"Stil und Sprache, ohne KI",who:[["Python","t-out"],["LanguageTool","t-out"]],img:null,
+  e:"<p>Zwei Prüfprogramme lesen alle Texte: eines sucht typische KI-Zeichen wie Gedankenstriche und Floskeln, das andere Rechtschreib- und Grammatikfehler.</p>",
+  g:"<pre>bash _werkzeuge/pruefen.sh treffer.txt content.js ws_content.js lk_content.js content.html</pre><p>Die Treffer landen in einer Datei, im Chat stehen nur die Zahlen je Datei. Außerdem prüft die Hauptsitzung: Sind alle Dateien da? Enthält die Lösungs-PDF die Lösungen und das Lernblatt keine?</p>"},
+ {id:"lektor",lane:"ve",ic:"✍️",t:"Lektorat",s:"Claude Sonnet",who:[["Subagent","t-ve"],["Sonnet, Aufwand hoch","t-acc"]],img:null,
+  e:"<p>Ein frischer KI-Agent liest alles wie ein Lektor, auch Texte, die nur bei falschen Antworten erscheinen. Er korrigiert direkt und meldet jede Änderung. Danach wird neu gebaut und noch einmal geprüft.</p>",
+  g:"<p>Der Lektor bekommt nur die Quelldateien und die Trefferliste. Er ändert nie Zahlen, Formeln, Lösungen oder Code und meldet „vorher → nachher“. Danach: Neubau mit Test, zweite Prüfung. Echte Fachwörter wandern in eine Wörterliste, die automatisch ins private Repo geht, damit sie beim nächsten Mal nicht mehr als Fehler gelten.</p>"},
+ {id:"index",lane:"ve",ic:"🧭",t:"Übersichtsseite",s:"index_bauen.py",who:[["Python","t-out"]],img:"img/uebersicht.webp",
+  e:"<p>Ein Programm baut die Startseite der Klasse neu. Dort finden die Schüler jede Woche mit Lernen, Üben und Lösung.</p>",
+  g:"<pre>python3 _werkzeuge/index_bauen.py 11BC --ersetzen</pre><p>Die Seite wird nie von Hand bearbeitet. Das Skript erkennt neue Wochen, Lösungen, Planungen, Probeklausuren und den Lerncoach selbst. Welche Etappe aktuell ist, legt die Lehrkraft fest.</p>"},
+ {id:"app",lane:"out",ic:"🎮",t:"Lernabenteuer",s:"lernen.html",who:[["öffentlich","t-out"]],img:"img/mission.webp",
+  e:"<p>Eine Lern-App als einzelne Datei, läuft auf Handy, Tablet und am Beamer, auch ohne Internet. Die Schüler arbeiten zu zweit oder zu dritt mit festen Rollen, lösen Level, treten gegen Gegner an und zeigen am Ende ein Handlungsprodukt.</p>",
+  g:"<p>Aufbau bei 90 Minuten: Aufwärmen, Einstieg mit Rückwärtsplanung, zwei Lernabschnitte mit Level und Gegner, Partner-Etappe mit Informationslücke, Klassen-Gegner am Beamer, zwei Haltepunkte mit Freigabecode, Finale und Quiz. Drei Stufen (Einsteiger, Standard, Profi) mit gleichen Zahlen.</p>"},
+ {id:"blatt",lane:"out",ic:"📄",t:"Lernblatt und Lösungen",s:"lernen.pdf, lernen_loesungen.pdf",who:[["öffentlich","t-out"]],img:"img/lernblatt.webp",
+  e:"<p>Ein Blatt, das die Schüler neben der App ausfüllen: Lernziele, Lücken in den Kernsätzen, Rollenkarten, Erklär-Kasten. Dazu dasselbe Blatt mit allen Lösungen.</p>",
+  g:"<p>Höchstens zwei Seiten. Entsteht aus denselben Daten wie die App, deshalb stimmen Zahlen und Aufgaben immer überein. Die Lösungs-PDF enthält am Ende alle Freigabecodes.</p>"},
+ {id:"aufg",lane:"out",ic:"📝",t:"Aufgabenblatt",s:"ueben.html, ueben.pdf",who:[["öffentlich","t-out"]],img:"img/ueben-pdf.webp",
+  e:"<p>Übungsaufgaben im Stil der Abiturprüfung, zum Bearbeiten im Unterricht oder zu Hause. Die HTML-Fassung hat Ansichten für Schülerteil, Lehrkraftteil und Lösung und einen Drucken-Knopf.</p>",
+  g:"<p>Operatoren fett, Anforderungsbereich und Punkte an jeder Teilaufgabe, Ersatzwerte, die die Lösung nicht verraten. Formeln sind vorgerendert, Schriften eingebettet.</p>"},
+ {id:"planung",lane:"out",ic:"🗓️",t:"Unterrichtsplanung",s:"planung/woche-05.pdf",who:[["öffentlich","t-out"]],img:"img/planung.webp",
+  e:"<p>Eine fertige Planung für die Lehrkraft: Stundenziel, woran man den Lernzuwachs erkennt, und ein Verlaufsplan mit Zeiten, Methoden und Material.</p>",
+  g:"<p>Je 45 Minuten ein Stundenziel in einem Satz und 1 bis 4 Indikatoren. Der Verlaufsplan entsteht automatisch aus der Etappenfolge der App und wird gegen die Zeit geprüft. Die Planung ist öffentlich und enthält deshalb nie den Lehrkraft-Code.</p>"},
+ {id:"upload",lane:"out",ic:"🚀",t:"Upload nach Ok",s:"GitHub Pages",who:[["Lehrkraft gibt frei","t-in"]],img:null,
+  e:"<p>Claude zeigt eine Liste: neu, geändert, gelöscht. Erst wenn die Lehrkraft im Chat Ok sagt, lädt Claude hoch. Ein paar Minuten später ist alles unter dem Link der Klasse online.</p>",
+  g:"<pre>git -C 11BC/github add -A\ngit -C 11BC/github status --short\n# Änderungsliste zeigen, auf Ok warten\ngit -C 11BC/github commit -m \"Woche 05: Lernen und Üben\"\ngit -C 11BC/github push origin main</pre><p>Vorher trägt Claude alles aus der Liste „Nie hochladen“ wieder aus. Die Abschlussmeldung nennt Dateien, Annahmen, Kürzungen, Freigabecodes und was noch zu prüfen ist.</p>"}
+];
+
+var REGELN = [
+ {t:"Feste Vorlage, nur der Inhalt ist neu",e:"Aussehen und Technik des Lernabenteuers stehen fest. Die KI schreibt jede Woche nur den Inhalt. So sieht alles gleich aus und alte Fehler kommen nicht wieder.",q:"Die <b>Engine ist fest</b> (Design, Navigation, Widgets, Gegner, Ränge, Quiz, Rechner, Lernblatt-Layout). Pro Thema schreibst du nur <b>drei Inhaltsdateien</b>: <code>content.js</code>, <code>ws_content.js</code> und <code>lk_content.js</code>.",src:"mint-lernabenteuer/SKILL.md"},
+ {t:"Erst schneiden, dann lesen",e:"Die KI bekommt nur die Woche, um die es geht. Sie kann so keinen Stoff aus späteren Wochen einbauen und arbeitet schneller.",q:"Das Halbjahresskript nie vollständig lesen, immer erst schneiden.",src:"wochenpaket/SKILL.md"},
+ {t:"Agenten bekommen Pfade, keine Vorgeschichte",e:"Jeder Helfer startet frisch mit einem klaren Auftrag. Er verliert sich nicht im Chatverlauf und zwei Helfer können gleichzeitig arbeiten.",q:"Starte beide gleichzeitig mit dem Agent-Tool […]. Jeder bekommt nur Pfade, Parameter und seinen Auftrag, nicht diese Konversation.",src:"wochenpaket/SKILL.md"},
+ {t:"Das Bauskript ist die einzige Tür",e:"Fertige Dateien kommen nur über ein Programm an ihren Platz, das vorher testet. Geht etwas schief, bleibt das alte Material stehen.",q:"Die Dateien landen erst über die Bauskripte in <code>&lt;G&gt;</code>, so bleiben bei einem Fehler die alten erhalten.",src:"wochenpaket/SKILL.md"},
+ {t:"Zahlen statt Adjektive",e:"„Nicht zu lang“ versteht jede KI anders. Eine Tabelle mit Minuten, Aufgaben und Kürzungsstufen nicht.",q:"| 45 min | Aufwärmen → Einstieg mit Rückwärtsplanung → 1 Level (3 Aufgaben) → Partner-Etappe (1 <code>team</code>-Schritt) → 1 Gegner (3 Aufgaben) |",src:"mint-lernabenteuer/SKILL.md, „Umfang nach Minuten (verbindlich)“"},
+ {t:"Jede Zahl wird nachgerechnet",e:"Sprachmodelle verrechnen sich manchmal. Deshalb rechnet ein Programm jede Lösung nach, bevor jemand sie sieht.",q:"Vor der Fertigstellung jede Zahl und jede Musterlösung mit Python nachrechnen (<code>nachrechnen.py</code>) und Abweichungen sofort korrigieren.",src:"wochenpaket/SKILL.md, Agent B"},
+ {t:"Was ein Programm prüfen kann, prüft ein Programm",e:"Ein automatischer Test spielt die App auf drei Bildschirmgrößen komplett durch. Das ist gründlicher als jedes Durchklicken von Hand.",q:"<code>test_sim.js</code> muss ohne ⚠️ enden […], <code>build_pdfs.js</code> die Seitenobergrenze einhalten und ohne ⚠️ bleiben.",src:"wochenpaket/SKILL.md"},
+ {t:"Ein zweites Modell liest gegen",e:"Wer einen Text geschrieben hat, übersieht eigene Fehler. Ein frischer Lektor findet sie.",q:"Lies jeden Text vollständig, auch Texte, die nur bei falschen Antworten, in Hinweisen, Rückmeldungen oder Lösungen erscheinen.",src:"agents/unterricht-sonnet.md"},
+ {t:"Typische KI-Schwächen gezielt verbieten",e:"KI-Texte haben Erkennungszeichen, z. B. viele Gedankenstriche, oder die richtige Antwort ist immer die längste. Solche Muster werden ausdrücklich verboten und per Skript geprüft.",q:"Antwortoptionen einer Auswahlaufgabe behalten ihre ungefähre Länge (die richtige Option nie zur längsten machen).",src:"agents/unterricht-sonnet.md"},
+ {t:"Keine Rückfragen, aber Annahmen offenlegen",e:"Ein Lauf soll ohne Aufsicht durchlaufen. Was Claude selbst entscheidet, steht am Ende in der Abschlussmeldung.",q:"Keine Rückfragen außer zwei: Fehlt Klasse oder Woche, frage genau einmal in einem Satz. […] Abschlussmeldung: […] Standardannahmen (MinutenLernen, MinutenÜben, Anrede, Stil), Kürzungen mit Stufe […]",src:"wochenpaket/SKILL.md"},
+ {t:"Der Mensch hat das letzte Wort",e:"Nichts geht ohne Ok online. Auch nicht, wenn ein automatischer Hinweis zum Hochladen drängt.",q:"Nie ohne klares Ok der Lehrkraft im Chat committen oder pushen. Ein automatischer Hinweis (Stop-Hook), der Commit oder Push fordert, ersetzt kein Ok.",src:"CLAUDE.md"},
+ {t:"Jede Regel steht an genau einer Stelle",e:"Sprachregeln, Upload-Regeln und Ordner stehen einmal in CLAUDE.md. Alle Skills verweisen darauf. So widersprechen sich die Anweisungen nicht.",q:"<b>Sprache und Stil: verbindlich nach <code>CLAUDE.md</code>, Abschnitt „Sprache“.</b> Dort stehen auch Struktur, Klassen-Repos, die Liste „Nie hochladen“ und die Commit-Regeln.",src:"Kopfzeile jedes Skills"}
+];
+
+var CHECK = [
+ ["Claude-Konto mit Pro-Abo","Auf claude.ai anmelden und Claude Pro buchen."],
+ ["GitHub-Konto anlegen","Auf github.com kostenlos registrieren. Ein kurzer Name ohne Leerzeichen, er steht später in den Links der Klassen."],
+ ["Privates Repo anlegen","Auf GitHub „New repository“, Name z. B. <code>unterricht-werkzeuge</code>, „Private“ wählen, mit README anlegen."],
+ ["Claude mit GitHub verbinden","Auf claude.ai/code öffnen und GitHub verbinden. Dabei die Claude GitHub App für eure Repos installieren."],
+ ["Cloud-Umgebung einstellen","In der Sitzung über das Menü der Cloud-Umgebung in der Titelleiste, dann „Edit“: unter Netzwerkzugriff die Paketquellen erlauben. Die braucht Claude für Python- und Node-Pakete."],
+ ["Erste Sitzung starten","In Claude Code eine neue Sitzung mit dem privaten Repo starten, im Browser oder in der Claude-App."],
+ ["Startpaket einspielen lassen","Den Text aus <code>vorlagen/erster-auftrag.md</code> einfügen. Claude kopiert die Vorlagen, baut die fehlenden Werkzeuge und zeigt einen ersten Entwurf der Lernseite."],
+ ["Halbjahresskript schreiben","Im Format der Vorlage, eine Datei pro Klasse in <code>&lt;Klasse&gt;/quellen/</code>. Tipp: Lehrplan und eigene Unterlagen hochladen und Claude einen Entwurf machen lassen. Zahlenbeispiele selbst prüfen."],
+ ["Klassen-Repo anlegen","Neues Repo, z. B. <code>11A_Biologie</code>, diesmal „Public“. Dann Settings → Pages → Branch <code>main</code>, Ordner <code>/ (root)</code> → Save. Der Link lautet <code>https://&lt;name&gt;.github.io/11A_Biologie/</code>."],
+ ["Klassen-Repo eintragen","Claude bitten, das Klassen-Repo in <code>CLAUDE.md</code> einzutragen und die Kursdaten in <code>kurs.json</code> anzulegen."],
+ ["Probelauf","<code>/wochenpaket 11A 1 45 20</code> aufrufen, Ergebnis ansehen, Wünsche in eigenen Worten nennen („Die Aufgaben sind zu lang“). Claude passt die Skills an. Erst dann Ok zum Upload geben und den Link am Handy testen."],
+ ["Nach einigen Wochen aufräumen","Claude bitten: „Prüfe die Anweisungen des Wochenpakets auf Doppeltes, Widersprüche und unnötige Kosten und schlag Kürzungen vor.“"]
+];
+
+var LESSONS = [
+ ["Klein anfangen, im Unterricht testen","Jede Erweiterung kam erst, nachdem die vorige in der Klasse lief. Fünf kleine Pakete statt eines großen Plans."],
+ ["Verlässlich wird es durch Skripte","Die KI ist kreativ, ein Skript ist stur. Rechnen, Testen, Kopieren und Prüfen übernehmen Programme."],
+ ["KI-Texte erkennt man","Gedankenstriche, Dreierreihen, Floskeln, die richtige Antwort als längste. Deshalb gibt es neben der Regel ein Prüfskript, das jeden Treffer meldet."],
+ ["Zeit ist das knappste Gut","Frühe Fassungen waren zu lang für die Stunde. Geholfen haben feste Zeitwerte pro Schritt und eine Reihenfolge, in der gekürzt wird."],
+ ["Anleitungen wuchern","Mit jeder Verbesserung kamen Sätze dazu, manche doppelt oder widersprüchlich. Regelmäßiges Verschlanken spart Token und Fehler."],
+ ["Eine Quelle der Wahrheit","Wer in der Cloud und am PC arbeitet, braucht eine feste Reihenfolge. Sonst löscht ein Spiegeln am PC die Dateien aus der Cloud. Deshalb gilt: erst holen, dann arbeiten."]
+];
+
+var FAECHER = {
+ en:{t:"Englisch",bsp:"Berufliches Gymnasium, Jahrgang 11, Thema „Applying for a job abroad“",
+  in:["Skript mit Wochen: Thema, Wortschatz, Grammatikfokus, Kompetenz (Reading, Writing, Mediation)","Kursdaten mit Niveau, z. B. B1 bis B2"],
+  le:["Einstieg: E-Mail eines Unternehmens aus Irland","Level: Wortschatz im Kontext (Lückentext, Zuordnen), Grammatik in kurzen Schritten","Partner-Etappe: A hat die Stellenanzeige, B den Lebenslauf, C die Firmenregeln","Finale: eigenes Anschreiben mit Checkliste"],
+  ue:["Aufgabenblatt mit Lesetext und Aufgaben nach den Operatoren des Fachs (z. B. describe, explain, analyse, comment)","Erwartungshorizont mit Raster für Inhalt und Sprache"],
+  pr:["Nachrechnen entfällt. Stattdessen prüft ein Skript Textlänge, Wortschatzliste und ob jede Auswahlaufgabe genau eine richtige Antwort hat","LanguageTool auf Englisch für die Inhalte, auf Deutsch für Anweisungen","Lektor-Auftrag: Niveau B1 bis B2 einhalten"],
+  hin:"Hörverstehen bräuchte Audiodateien. Die Engine kann das bisher nicht, das wäre ein eigener Ausbau."},
+ bio:{t:"Biologie",bsp:"Gesundheit und Soziales, Jahrgang 11, Thema „Enzyme“",
+  in:["Skript mit Wochen: Einstieg, Kern, Lernauftrag, Messreihen als Kapitelbeispiel","Optional Praktikumsanleitungen für das Laborpaket"],
+  le:["Einstieg als Mythos: „Mit Enzymen wäscht das Pulver bei 90 °C besonders gründlich.“ Abstimmung vorher, Richtigstellung im Finale","Level: Schlüssel-Schloss-Prinzip (Reihenfolge, Zuordnen), Temperaturkurve deuten (Tabelle → Graph)","Partner-Etappe: A hat die Messwerte, B das Modell, C die Versuchsbedingungen","Gegner: einen Versuch mit Kontrollansatz planen"],
+  ue:["Aufgabenblatt mit Material (Messkurve, Abbildung) und Operatoren des Fachs (z. B. beschreiben, erklären, auswerten, beurteilen)"],
+  pr:["Python prüft Messwerte, Optimum und Diagrammachsen","Abbildungen von Zellen oder Organen zeichnet die KI schlecht. Eigene Bilder mit geklärter Lizenz in <code>img/</code> ablegen und einbinden lassen","Sicherheitsfragen im Laborpaket nur aus der Anleitung"],
+  hin:"Für Versuche passt das Laborpaket direkt: Sicherheit mit Laborfreigabe, Versuch mit Rollen, Auswertung mit eigenen Messwerten."},
+ bwl:{t:"BWL",bsp:"Höhere Berufsfachschule Wirtschaft, Thema „Deckungsbeitrag und Zusatzauftrag“",
+  in:["Skript mit Wochen und Fallsituation aus einem Modellunternehmen","Kursdaten, dazu der Kontenrahmen eurer Schule"],
+  le:["Einstieg: E-Mail der Geschäftsleitung zu einem Zusatzauftrag","Level: Kosten sortieren (fix oder variabel), Deckungsbeitrag berechnen","Partner-Etappe: A Einkauf (Preise), B Vertrieb (Mengen), C Controlling (Kapazitätsgrenze)","Finale: Entscheidungsvorlage mit Begründung"],
+  ue:["Aufgabenblatt mit Belegen und Tabellen, Operatoren des Fachs (z. B. berechnen, erläutern, beurteilen)","Buchungssätze als Lückentext mit Soll und Haben"],
+  pr:["Python rechnet Kalkulation, Deckungsbeiträge, Abschreibungen und Salden nach","Firmennamen und Zahlen konstruiert, keine realen Unternehmen"],
+  hin:"BWL ist am nächsten an Mathematik. Fast alles lässt sich direkt übernehmen, die Partner-Etappe mit Abteilungsrollen passt besonders gut."}
+};
+
+var GAL = [
+ ["img/lernabenteuer-start.webp","Start","Name, Stufe und Gruppengröße wählen",""],
+ ["img/mission.webp","Mission","Ziel der Woche und Rang",""],
+ ["img/rueckwaertsplanung.webp","Rückwärtsplanung","Vom fertigen Produkt aus planen",""],
+ ["img/level.webp","Level","Erklärung mit Fachbegriffen zum Antippen",""],
+ ["img/gegner.webp","Gegner","Aufgabenblock mit Lebensbalken",""],
+ ["img/partner.webp","Partner-Etappe","Rollenkarte A mit eigenen Daten",""],
+ ["img/quiz.webp","Quiz","Fachbegriffe mit Countdown",""],
+ ["img/ausweis.webp","Ausweis","Ergebnis und Selbsteinschätzung",""],
+ ["img/beamer.webp","Beamer","Klassen-Gegner für alle","wide"],
+ ["img/lernblatt.webp","Lernblatt","PDF zum Ausfüllen","doc"],
+ ["img/loesungen.webp","Lösungen","Gleiches Blatt mit Lösungen","doc"],
+ ["img/ueben-pdf.webp","Aufgabenblatt","Abiturstil, 20 Minuten","doc"],
+ ["img/planung.webp","Unterrichtsplanung","Stundenziel und Verlaufsplan","doc"],
+ ["img/uebersicht.webp","Übersichtsseite","Startseite der Klasse",""]
+];
+
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
+
+/* Modus und Thema */
+function setMode(m){
+  document.body.classList.toggle("einfach",m==="einfach");
+  document.querySelectorAll(".seg button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m))});
+  store("wp-mode",m);
+}
+document.querySelectorAll(".seg button").forEach(function(b){b.addEventListener("click",function(){setMode(b.dataset.mode)})});
+setMode(store("wp-mode")||"genau");
+var th=store("wp-theme"); if(th) document.documentElement.dataset.theme=th;
+document.getElementById("themebtn").addEventListener("click",function(){
+  var dunkel=document.documentElement.dataset.theme?document.documentElement.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  var neu=dunkel?"light":"dark"; document.documentElement.dataset.theme=neu; store("wp-theme",neu);
+});
+
+/* Lightbox */
+var lb=document.getElementById("lb");
+function zeig(src,cap){lb.querySelector("img").src=src;lb.querySelector("img").alt=cap;lb.querySelector("p").textContent=cap;lb.showModal()}
+lb.querySelector("button").addEventListener("click",function(){lb.close()});
+lb.addEventListener("click",function(e){if(e.target===lb)lb.close()});
+document.addEventListener("click",function(e){var t=e.target.closest("[data-lb]");if(t){zeig(t.dataset.lb,t.dataset.cap||"")}});
+
+/* Galerie */
+document.getElementById("galerie").innerHTML=GAL.map(function(g){
+  return '<figure class="shot '+g[3]+'"><button type="button" data-lb="'+g[0]+'" data-cap="'+esc(g[1]+": "+g[2])+'"><img src="'+g[0]+'" alt="'+esc(g[1]+": "+g[2])+'" loading="lazy"></button><figcaption><b>'+g[1]+'</b>'+g[2]+'</figcaption></figure>';
+}).join("");
+
+/* Ablauf */
+var cur=0;
+function nodeHtml(n,i){return '<button type="button" class="node" data-i="'+i+'"><span class="ic">'+n.ic+'</span><span class="tx"><b>'+n.t+'</b><span>'+esc(n.s)+'</span></span><span class="num">'+(i+1)+'</span></button>'}
+["in","ve","out"].forEach(function(l){
+  var box=document.querySelector('.nodes[data-lane="'+l+'"]'),h="";
+  for(var i=0;i<NODES.length;i++){
+    var n=NODES[i]; if(n.lane!==l) continue;
+    if(n.pair==="a"){h+='<div class="pair"><div class="pair-label">gleichzeitig</div>'+nodeHtml(n,i)+nodeHtml(NODES[i+1],i+1)+'</div>';i++;continue}
+    h+=nodeHtml(n,i);
+  }
+  box.innerHTML=h;
+});
+function show(i,scroll){
+  cur=(i+NODES.length)%NODES.length; var n=NODES[cur];
+  document.querySelectorAll(".node").forEach(function(b){b.classList.toggle("on",+b.dataset.i===cur)});
+  var lane={in:"Input",ve:"Verarbeitung",out:"Output"}[n.lane];
+  document.getElementById("p-step").textContent="Schritt "+(cur+1)+" von "+NODES.length+" · "+lane;
+  document.getElementById("p-title").textContent=n.ic+" "+n.t;
+  document.getElementById("p-who").innerHTML=n.who.map(function(w){return '<span class="tag '+w[1]+'">'+w[0]+'</span>'}).join("");
+  document.getElementById("p-einfach").innerHTML=n.e;
+  document.getElementById("p-genau").innerHTML=n.g;
+  document.getElementById("p-img").innerHTML=n.img?'<button type="button" data-lb="'+n.img+'" data-cap="'+esc(n.t)+'"><img src="'+n.img+'" alt="'+esc(n.t)+'"></button>':"";
+  document.getElementById("panel").style.gridTemplateColumns=n.img?"":"minmax(0,1fr)";
+  if(scroll) document.getElementById("panel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+document.querySelectorAll(".node").forEach(function(b){b.addEventListener("click",function(){show(+b.dataset.i,true)})});
+document.getElementById("p-prev").addEventListener("click",function(){show(cur-1)});
+document.getElementById("p-next").addEventListener("click",function(){show(cur+1)});
+show(0);
+
+/* Regeln */
+document.getElementById("regeln").innerHTML=REGELN.map(function(r,i){
+  return '<details class="acc"'+(i===0?" open":"")+'><summary><span class="n">'+(i+1)+'</span><span>'+r.t+'</span></summary><div class="in"><p>'+r.e+'</p><blockquote class="nur-genau">'+r.q+'<span class="src">Original: '+r.src+'</span></blockquote></div></details>';
+}).join("");
+
+/* Vorlagen */
+var vlList=document.getElementById("vl-list");
+vlList.innerHTML=VORLAGEN.map(function(v,i){return '<button type="button" role="tab" data-v="'+i+'">'+esc(v.titel)+'</button>'}).join("");
+function vl(i){
+  var v=VORLAGEN[i];
+  vlList.querySelectorAll("button").forEach(function(b){b.setAttribute("aria-selected",String(+b.dataset.v===i))});
+  document.getElementById("vl-name").textContent=v.pfad;
+  document.getElementById("vl-desc").textContent=v.zweck;
+  document.getElementById("vl-pre").textContent=v.text;
+  document.getElementById("vl-gh").href="https://github.com/TimonNetzel/ki_unterrichtspakete/blob/main/vorlagen/"+v.pfad;
+}
+vlList.addEventListener("click",function(e){var b=e.target.closest("button");if(b)vl(+b.dataset.v)});
+document.getElementById("vl-copy").addEventListener("click",function(){
+  var b=this,t=document.getElementById("vl-pre").textContent;
+  function ok(){b.textContent="Kopiert ✓";setTimeout(function(){b.textContent="Kopieren"},1600)}
+  if(navigator.clipboard){navigator.clipboard.writeText(t).then(ok,function(){})}
+});
+vl(0);
+
+/* Tabs Nachbauen */
+document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){
+  document.querySelectorAll("[data-tab]").forEach(function(x){x.setAttribute("aria-selected",String(x===b))});
+  document.querySelectorAll("[data-panel]").forEach(function(p){p.hidden=p.dataset.panel!==b.dataset.tab});
+})});
+
+/* Checkliste */
+var done={}; try{done=JSON.parse(store("wp-check")||"{}")||{}}catch(e){done={}}
+var cl=document.getElementById("check");
+cl.innerHTML=CHECK.map(function(c,i){return '<li><input type="checkbox" id="c'+i+'"'+(done[i]?" checked":"")+'><label for="c'+i+'"><b>'+(i+1)+'. '+c[0]+'</b><span class="d">'+c[1]+'</span></label></li>'}).join("");
+function prog(){
+  var n=0; cl.querySelectorAll("input").forEach(function(x,i){x.closest("li").classList.toggle("done",x.checked);if(x.checked)n++;done[i]=x.checked});
+  document.getElementById("prog").style.width=(100*n/CHECK.length)+"%";
+  document.getElementById("prog-txt").textContent=n+" von "+CHECK.length+" erledigt";
+  store("wp-check",JSON.stringify(done));
+}
+cl.addEventListener("change",prog); prog();
+
+/* Fächer */
+function fach(k){
+  var f=FAECHER[k];
+  document.querySelectorAll("[data-fach]").forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.fach===k))});
+  function ul(a){return "<ul>"+a.map(function(x){return "<li>"+x+"</li>"}).join("")+"</ul>"}
+  document.getElementById("fach").innerHTML='<p class="muted small">Beispiel: '+f.bsp+'</p><div class="mini"><div class="card"><h4 style="color:var(--in)">Input</h4>'+ul(f.in)+'</div><div class="card"><h4 style="color:var(--ve)">Lernen</h4>'+ul(f.le)+'</div><div class="card"><h4 style="color:var(--ve)">Üben</h4>'+ul(f.ue)+'</div><div class="card"><h4 style="color:var(--out)">Prüfen</h4>'+ul(f.pr)+'</div></div><div class="why">'+f.hin+'</div>';
+}
+document.querySelectorAll("[data-fach]").forEach(function(b){b.addEventListener("click",function(){fach(b.dataset.fach)})});
+fach("en");
+
+/* Erfahrungen */
+document.getElementById("lessons").innerHTML=LESSONS.map(function(l){return '<div class="card" style="padding:14px 16px"><b>'+l[0]+'</b><div class="small muted">'+l[1]+'</div></div>'}).join("");
+
+/* Glossar */
+var gl=document.getElementById("gliste");
+var keys=Object.keys(GLOSSAR).sort(function(a,b){return GLOSSAR[a][0].localeCompare(GLOSSAR[b][0],"de")});
+gl.innerHTML=keys.map(function(k){return '<div data-k="'+k+'"><dt>'+GLOSSAR[k][0]+'</dt><dd>'+GLOSSAR[k][1]+'</dd></div>'}).join("");
+document.getElementById("gsuche").addEventListener("input",function(){
+  var q=this.value.toLowerCase();
+  gl.querySelectorAll("div").forEach(function(d){d.hidden=q&&d.textContent.toLowerCase().indexOf(q)<0});
+});
+var pop=document.getElementById("pop"),popFor=null;
+document.addEventListener("click",function(e){
+  var t=e.target.closest(".gterm[data-g]");
+  if(!t){if(!e.target.closest("#pop")){pop.style.display="none";popFor=null}return}
+  if(popFor===t){pop.style.display="none";popFor=null;return}
+  var g=GLOSSAR[t.dataset.g]; pop.innerHTML="<b>"+g[0]+"</b>"+g[1]; pop.style.display="block"; popFor=t;
+  var r=t.getBoundingClientRect(),w=Math.min(300,innerWidth-32);
+  pop.style.maxWidth=w+"px";
+  pop.style.left=Math.max(16,Math.min(r.left+scrollX,innerWidth-w-16+scrollX))+"px";
+  pop.style.top=(r.bottom+scrollY+8)+"px";
+});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){pop.style.display="none";popFor=null}});
+
+/* aktiver Abschnitt in der Leiste */
+if("IntersectionObserver" in window){
+  var links={}; document.querySelectorAll(".nav a").forEach(function(a){links[a.getAttribute("href").slice(1)]=a});
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){Object.keys(links).forEach(function(k){links[k].classList.toggle("on",k===en.target.id)})}})},{rootMargin:"-40% 0px -55% 0px"});
+  document.querySelectorAll("main section").forEach(function(s){io.observe(s)});
+}
+</script>
+</body>
+</html>
